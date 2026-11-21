@@ -1,8 +1,10 @@
 # Variables de entorno y configuración local
 .env
 .env.local
+.env.backup
 .env.*.local
 public/supabase-config.local.js
+backups/
 
 # Vercel y Node
 .vercel

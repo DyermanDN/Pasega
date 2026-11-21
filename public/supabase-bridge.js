@@ -226,6 +226,197 @@
     return 'editor';
   }
 
+  function markDirty() {
+    try {
+      const n = Number(localStorage.getItem('pasega_dirty_count') || '0') + 1;
+      localStorage.setItem('pasega_dirty_count', String(n));
+      if (!localStorage.getItem('pasega_dirty_since')) {
+        localStorage.setItem('pasega_dirty_since', new Date().toISOString());
+      }
+    } catch (e) {}
+  }
+
+  function markBackupDone(count, type) {
+    try {
+      localStorage.setItem(
+        'pasega_last_backup',
+        JSON.stringify({ at: new Date().toISOString(), count, type })
+      );
+      localStorage.removeItem('pasega_dirty_count');
+      localStorage.removeItem('pasega_dirty_since');
+    } catch (e) {}
+  }
+
+  function getBackupStatus() {
+    let lastBackup = null;
+    let dirtyCount = 0;
+    let dirtySince = null;
+    try {
+      const raw = localStorage.getItem('pasega_last_backup');
+      if (raw) lastBackup = JSON.parse(raw);
+      dirtyCount = Number(localStorage.getItem('pasega_dirty_count') || '0') || 0;
+      dirtySince = localStorage.getItem('pasega_dirty_since') || null;
+    } catch (e) {}
+    return { lastBackup, dirtyCount, dirtySince };
+  }
+
+  function sqlLit(str) {
+    return "'" + String(str).replace(/\u0000/g, '').replace(/'/g, "''") + "'";
+  }
+
+  function triggerDownload(filename, content, mime) {
+    const blob = new Blob([content], { type: mime });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      a.remove();
+      URL.revokeObjectURL(url);
+    }, 1000);
+  }
+
+  function pad2(n) {
+    return String(n).padStart(2, '0');
+  }
+
+  function stampFile() {
+    const d = new Date();
+    return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}_${pad2(d.getHours())}-${pad2(d.getMinutes())}`;
+  }
+
+  function buildSqlDump(rows, exportedAt) {
+    const lines = [
+      '-- ============================================================================',
+      `-- PASEGA · Respaldo completo de base de datos (${exportedAt})`,
+      `-- Registros: ${rows.length}`,
+      '-- Para cargar en pgAdmin 4: Query Tool -> abrir este archivo -> Execute (F5)',
+      '-- ============================================================================',
+      '',
+      'BEGIN;',
+      'SET standard_conforming_strings = on;',
+      '',
+      'CREATE TABLE IF NOT EXISTS public.pasega_docs (',
+      '  collection text NOT NULL,',
+      '  doc_id text NOT NULL,',
+      "  data jsonb NOT NULL DEFAULT '{}'::jsonb,",
+      '  updated_at timestamptz NOT NULL DEFAULT now(),',
+      '  updated_by uuid,',
+      '  PRIMARY KEY (collection, doc_id)',
+      ');',
+      ''
+    ];
+    for (let i = 0; i < rows.length; i++) {
+      const r = rows[i];
+      const jsonStr = JSON.stringify(r.data ?? {});
+      const ts = r.updated_at ? sqlLit(r.updated_at) + '::timestamptz' : 'now()';
+      lines.push(
+        `INSERT INTO public.pasega_docs (collection, doc_id, data, updated_at) VALUES (${sqlLit(r.collection)}, ${sqlLit(r.doc_id)}, ${sqlLit(jsonStr)}::jsonb, ${ts}) ON CONFLICT (collection, doc_id) DO UPDATE SET data = EXCLUDED.data, updated_at = EXCLUDED.updated_at;`
+      );
+    }
+    lines.push('', 'COMMIT;', '');
+    return lines.join('\n');
+  }
+
+  let activeClient = null;
+  let activeUser = null;
+  let activeRole = 'viewer';
+
+  async function fetchAllDocs(client) {
+    const rows = [];
+    const pageSize = 1000;
+    let from = 0;
+    while (true) {
+      const { data, error } = await client
+        .from(TABLE)
+        .select('collection, doc_id, data, updated_at')
+        .order('collection', { ascending: true })
+        .order('doc_id', { ascending: true })
+        .range(from, from + pageSize - 1);
+      if (error) throw translateDbError(error);
+      const batch = data || [];
+      for (let i = 0; i < batch.length; i++) rows.push(batch[i]);
+      if (batch.length < pageSize) break;
+      from += pageSize;
+    }
+    return rows;
+  }
+
+  window.PASEGA_BACKUP = {
+    getStatus: getBackupStatus,
+    async exportAll() {
+      if (!activeClient) throw new Error('Inicia sesión con Supabase para respaldar la base de datos.');
+      const rows = await fetchAllDocs(activeClient);
+      const collections = {};
+      rows.forEach((r) => {
+        collections[r.collection] = (collections[r.collection] || 0) + 1;
+      });
+      return {
+        format: 'pasega-backup-v1',
+        exportedAt: new Date().toISOString(),
+        totalRows: rows.length,
+        collections,
+        rows
+      };
+    },
+    async downloadSQL() {
+      const dump = await this.exportAll();
+      const sql = buildSqlDump(dump.rows, dump.exportedAt);
+      const filename = `pasega-backup-${stampFile()}.sql`;
+      triggerDownload(filename, sql, 'application/sql;charset=utf-8');
+      markBackupDone(dump.totalRows, 'sql');
+      return { filename, totalRows: dump.totalRows, collections: dump.collections };
+    },
+    async downloadJSON() {
+      const dump = await this.exportAll();
+      const filename = `pasega-backup-${stampFile()}.json`;
+      triggerDownload(filename, JSON.stringify(dump, null, 2), 'application/json;charset=utf-8');
+      markBackupDone(dump.totalRows, 'json');
+      return { filename, totalRows: dump.totalRows, collections: dump.collections };
+    },
+    async restoreJSON(file, onProgress) {
+      if (!activeClient) throw new Error('Inicia sesión con Supabase para restaurar.');
+      if (activeRole !== 'owner' && activeRole !== 'editor') {
+        throw new Error('Tu usuario es de solo lectura y no puede restaurar respaldos.');
+      }
+      const text = await file.text();
+      let parsed;
+      try {
+        parsed = JSON.parse(text);
+      } catch (e) {
+        throw new Error('El archivo no es un JSON válido.');
+      }
+      const rows = Array.isArray(parsed && parsed.rows) ? parsed.rows : null;
+      if (!rows || !rows.length) {
+        throw new Error('El respaldo no contiene registros válidos (falta el arreglo "rows").');
+      }
+      const valid = rows
+        .filter((r) => r && typeof r.collection === 'string' && typeof r.doc_id === 'string' && r.data !== undefined)
+        .map((r) => ({
+          collection: r.collection,
+          doc_id: r.doc_id,
+          data: r.data,
+          updated_at: r.updated_at || new Date().toISOString(),
+          updated_by: activeUser ? activeUser.id : null
+        }));
+      if (!valid.length) throw new Error('No se encontraron registros compatibles en el archivo.');
+
+      const chunk = 100;
+      for (let i = 0; i < valid.length; i += chunk) {
+        const part = valid.slice(i, i + chunk);
+        const { error } = await activeClient
+          .from(TABLE)
+          .upsert(part, { onConflict: 'collection,doc_id' });
+        if (error) throw translateDbError(error);
+        if (onProgress) onProgress(Math.min(i + part.length, valid.length), valid.length);
+      }
+      markBackupDone(valid.length, 'restore');
+      return { restored: valid.length };
+    }
+  };
+
   function createSupabaseDbAdapter(client, user) {
     const store = Object.create(null); // store[collection][docId] = data
     const colListeners = Object.create(null); // colListeners[collection] = Set<fn>
@@ -375,6 +566,7 @@
             { onConflict: 'collection,doc_id' }
           );
           if (error) throw translateDbError(error);
+          markDirty();
           const map = ensureCol(col);
           map[id] = payload;
           scheduleEmit(col, id);
@@ -386,6 +578,7 @@
             .eq('collection', col)
             .eq('doc_id', id);
           if (error) throw translateDbError(error);
+          markDirty();
           const map = ensureCol(col);
           delete map[id];
           scheduleEmit(col, id);
@@ -483,6 +676,9 @@
 
       const user = session.user;
       const role = await resolveUserRole(client, user);
+      activeClient = client;
+      activeUser = user;
+      activeRole = role;
       mountUserBar(client, user.email || 'Usuario', role);
 
       const db = role === 'blocked' ? null : createSupabaseDbAdapter(client, user);

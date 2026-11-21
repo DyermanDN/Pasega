@@ -38,3 +38,23 @@ insert into public.pasega_users (user_id, email, role)
 values ('UUID-DEL-USUARIO', 'vendedor@pasega.com', 'viewer');
 -- Roles disponibles: 'owner', 'editor', 'viewer', 'blocked'
 ```
+
+## Respaldos (pgAdmin 4 / PostgreSQL local)
+
+### Opción A: Desde la web (en cualquier PC)
+En el botón **Cargar datos → 6 · Respaldo de base de datos**:
+- **Descargar `.sql` (pgAdmin 4):** descarga un dump listo para ejecutar en **pgAdmin 4 → Query Tool → F5**.
+- **Descargar `.json` / Restaurar desde `.json`:** respaldo completo restaurable en 1 clic desde la web.
+- El panel avisa automáticamente cuando existen cambios nuevos sin respaldar.
+
+### Opción B: Sincronización automática directa a tu PostgreSQL local (pgAdmin 4)
+1. Copia `.env.backup.example` como `.env.backup` y coloca tu contraseña de PostgreSQL local (`LOCAL_PG_PASSWORD`).
+2. Haz doble clic en `scripts/backup-local.bat`:
+   - Descarga todos los registros de Supabase.
+   - Guarda copias fechadas `.sql` y `.json` en `backups/`.
+   - Crea y sincroniza automáticamente la base de datos `pasega_backup` en tu PostgreSQL local (con vistas `v_resumen_colecciones` y `v_ventas` listas para consultar en **pgAdmin 4**).
+3. *(Opcional)* Para programarlo automáticamente todos los días a las 20:00 (y de paso mantener despierto el plan Free de Supabase), ejecuta en PowerShell:
+   ```powershell
+   powershell -ExecutionPolicy Bypass -File scripts\instalar-tarea-windows.ps1 -Hora "20:00"
+   ```
+

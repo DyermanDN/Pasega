@@ -3110,7 +3110,39 @@ function vCargar(D){
     <p class="hint" style="margin-bottom:6px">Se usa solo cuando un comprobante en soles no tiene TC en el reporte del sistema.</p>
     ${vends.length? `<h2 style="font-size:14px;margin:16px 0 6px">Nombres de vendedores</h2><p class="hint">Si un vendedor aparece escrito de dos formas, ponle el mismo nombre a ambas.</p>
     <table class="lines"><tbody>${vends.map(v=>`<tr><td class="small">${esc(v)}</td><td><input type="text" data-vend="${esc(v)}" value="${esc((S.ajustes.vendedores||{})[v]||'')}" placeholder="Mostrar como…"></td></tr>`).join('')}</tbody></table>`:''}
-  </div></div>`;
+  </div></div>
+  ${(()=>{ const bk = window.PASEGA_BACKUP ? window.PASEGA_BACKUP.getStatus() : {lastBackup:null, dirtyCount:0};
+    const fmtAt = iso => { if(!iso) return ''; const dt = new Date(iso); return `${String(dt.getDate()).padStart(2,'0')}/${String(dt.getMonth()+1).padStart(2,'0')}/${dt.getFullYear()} ${String(dt.getHours()).padStart(2,'0')}:${String(dt.getMinutes()).padStart(2,'0')}`; };
+    const badge = bk.dirtyCount>0
+      ? `<span class="badge warn">⚠ ${bk.dirtyCount} cambio${bk.dirtyCount===1?'':'s'} sin respaldar</span>`
+      : bk.lastBackup
+        ? `<span class="badge good">✓ Último respaldo: ${fmtAt(bk.lastBackup.at)} (${bk.lastBackup.count} registros)</span>`
+        : `<span class="badge neutral">Aún sin respaldo desde este navegador</span>`;
+    return `<div class="card"><div class="sec-title"><h2>6 · Respaldo de base de datos (pgAdmin 4 / JSON)</h2>${badge}</div>
+      <p class="hint">Descarga una copia completa de toda tu información en Supabase (ventas, reportes, cobranzas, compras, catálogo, stock y ajustes). El archivo <b>.sql</b> se importa directo en <b>pgAdmin 4 → Query Tool → F5</b>; el <b>.json</b> sirve para restaurar todo desde aquí.</p>
+      <div class="row">
+        <button class="btn primary" data-act="bk-sql" ${S.persist?'':'disabled'}>Descargar .sql (pgAdmin 4)</button>
+        <button class="btn" data-act="bk-json" ${S.persist?'':'disabled'}>Descargar .json</button>
+        <button class="btn" data-act="bk-restore" ${S.persist && S.canWrite?'':'disabled'}>Restaurar desde .json…</button>
+      </div>
+      <input type="file" id="f-backup" accept=".json,application/json" hidden>
+      <div id="p-bk">${S.bkMsg||''}</div>
+    </div>`; })()}`;
+}
+async function handleBackupRestore(file){
+  if(!window.PASEGA_BACKUP){ toast('Módulo de respaldo no disponible.'); return; }
+  if(!(await confirmar('Restaurar respaldo', `Se cargarán los registros de "${file.name}" en Supabase (se actualizarán los existentes con el mismo ID). ¿Continuar?`, {ok:'Restaurar', no:'Cancelar'}))) return;
+  S.bkMsg = `<div class="callout info" style="margin-top:12px"><div>Restaurando ${esc(file.name)}…</div></div>`; render();
+  try{
+    const r = await window.PASEGA_BACKUP.restoreJSON(file, (done, tot)=>{
+      const box = document.getElementById('p-bk');
+      if(box) box.innerHTML = `<div class="callout info" style="margin-top:12px"><div>Restaurando ${done} de ${tot} registros…</div></div>`;
+    });
+    S.bkMsg = `<div class="callout good" style="margin-top:12px"><div><b>Respaldo restaurado:</b> ${r.restored} registros cargados. Recargando panel…</div></div>`; render();
+    setTimeout(()=>window.location.reload(), 1100);
+  }catch(e){
+    S.bkMsg = `<div class="callout bad" style="margin-top:12px"><div>${esc(e.message||String(e))}</div></div>`; render();
+  }
 }
 // Estado de cuenta subido desde "Cargar datos"
 async function handleCobFile(file){
@@ -3388,6 +3420,19 @@ document.addEventListener('click', async e=>{
     case 'cat-subir': document.getElementById('f-cat').click(); break;
     case 'cob-confirmar': if(window.COB) window.COB.confirmar(); S.cobMsg = `<div class="callout good" style="margin-top:12px"><div>Estado de cuenta reemplazado.</div></div>`; render(); break;
     case 'cob-cancelar': if(window.COB) window.COB.cancelar(); S.cobMsg = ''; render(); break;
+    case 'bk-sql': case 'bk-json': {
+      if(!window.PASEGA_BACKUP){ toast('Módulo de respaldo no disponible.'); break; }
+      t.disabled = true; const prevTxt = t.textContent; t.textContent = 'Generando respaldo…';
+      try{
+        const r = d.act==='bk-sql' ? await window.PASEGA_BACKUP.downloadSQL() : await window.PASEGA_BACKUP.downloadJSON();
+        S.bkMsg = `<div class="callout good" style="margin-top:12px"><div><b>Respaldo descargado:</b> ${esc(r.filename)} (${r.totalRows} registros).</div></div>`;
+        toast('Respaldo descargado');
+      }catch(e){
+        S.bkMsg = `<div class="callout bad" style="margin-top:12px"><div>${esc(e.message||String(e))}</div></div>`;
+        toast('Error al generar respaldo');
+      }finally{ t.disabled = false; t.textContent = prevTxt; render(); }
+      break; }
+    case 'bk-restore': document.getElementById('f-backup').click(); break;
     case 'cat-editar': S.catv.editar = !S.catv.editar; render(); break;
     case 'cat-plantilla': plantillaCatalogo(); break;
     case 'cat-faltantes': faltantesCatalogo(); break;
@@ -3569,6 +3614,7 @@ document.addEventListener('change', e=>{
   if(d.catmap!==undefined){ if(S.catImp){ if(t.value==='') delete S.catImp.map[d.catmap]; else S.catImp.map[d.catmap] = +t.value; render(); } return; }
   if(d.catv==='solo'){ S.catv.solo = t.value; S.catv.pg = 0; render(); return; }
   if(t.id==='f-compra'){ if(t.files[0]) handleCompraFile(t.files[0]); t.value=''; return; }
+  if(t.id==='f-backup'){ if(t.files[0]) handleBackupRestore(t.files[0]); t.value=''; return; }
 });
 let qT; document.addEventListener('input', e=>{
   if(e.target.id==='cob-host') return;

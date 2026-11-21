@@ -83,7 +83,16 @@ as $$
     and public.pasega_user_role() in ('owner', 'editor');
 $$;
 
--- 4. Seguridad a nivel de fila (Row Level Security)
+-- 4. Seguridad a nivel de fila (Row Level Security) y permisos
+grant usage on schema public to authenticated;
+grant select, insert, update, delete on public.pasega_docs to authenticated;
+grant select, insert, update, delete on public.pasega_users to authenticated;
+grant execute on function public.pasega_user_role() to authenticated;
+grant execute on function public.pasega_can_read() to authenticated;
+grant execute on function public.pasega_can_write() to authenticated;
+revoke all on public.pasega_docs from anon;
+revoke all on public.pasega_users from anon;
+
 alter table public.pasega_docs enable row level security;
 alter table public.pasega_users enable row level security;
 

@@ -22,8 +22,8 @@ jobs:
       - name: Ejecutar validaciones y pruebas de seguridad
         run: npm test
 
-      - name: Revisar si el PR toca archivos críticos de BD o despliegue
-        if: github.event_name == 'pull_request'
+      - name: Revisar si toca archivos críticos de BD o despliegue
+        if: github.event_name == 'pull_request' || github.ref == 'refs/heads/desarrollo'
         run: |
           git fetch origin main --depth=1
           CHANGED=$(git diff --name-only origin/main...HEAD || true)

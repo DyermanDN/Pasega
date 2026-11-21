@@ -1,0 +1,9 @@
+{
+  "name": "pasega-finanzas-cobranzas",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Panel de Finanzas, Ventas, Rentabilidad y Cobranzas para PASEGA Importaciones (Vercel + Supabase)",
+  "scripts": {
+    "dev": "npx vercel dev"
+  }
+}

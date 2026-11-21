@@ -1,0 +1,16 @@
+# Variables de entorno y configuración local
+.env
+.env.local
+.env.*.local
+public/supabase-config.local.js
+
+# Vercel y Node
+.vercel
+node_modules
+
+# Archivo original de respaldo local
+Pasega · Finanzas y cobranzas.html
+
+# Sistema operativo
+.DS_Store
+Thumbs.db

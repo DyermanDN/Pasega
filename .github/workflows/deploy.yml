@@ -1,0 +1,60 @@
+name: Deploy Producción (Pasega)
+
+on:
+  workflow_dispatch:
+    inputs:
+      motivo:
+        description: 'Resumen del cambio a desplegar (ej. PR #4 - mejoras en cobranzas)'
+        required: true
+        type: string
+
+jobs:
+  deploy:
+    name: Desplegar a Vercel (Producción)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verificar que el despliegue sea desde main
+        if: github.ref != 'refs/heads/main'
+        run: |
+          echo "ERROR: Solo se puede desplegar a producción desde la rama 'main' (cambios aprobados por Pull Request)."
+          exit 1
+
+      - name: Descargar código de main
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: 1. Validar código y seguridad
+        run: npm test
+
+      - name: 2. Verificar secretos de Vercel configurados
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          if [ -z "$VERCEL_TOKEN" ] || [ -z "$VERCEL_ORG_ID" ] || [ -z "$VERCEL_PROJECT_ID" ]; then
+            echo "ERROR: Faltan secretos en GitHub (Settings -> Secrets and variables -> Actions): VERCEL_TOKEN, VERCEL_ORG_ID, VERCEL_PROJECT_ID"
+            exit 1
+          fi
+
+      - name: 3. Desplegar a Vercel Producción
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          echo "Motivo del despliegue: ${{ inputs.motivo }}"
+          npx --yes vercel@latest pull --yes --environment=production --token="$VERCEL_TOKEN"
+          npx --yes vercel@latest deploy --prod --yes --token="$VERCEL_TOKEN"
+
+      - name: 4. Verificar web en producción
+        run: |
+          sleep 5
+          curl -fsS https://pasega.vercel.app/ > /dev/null
+          CFG=$(curl -fsS https://pasega.vercel.app/api/config)
+          echo "$CFG" | grep -q '"configured":true'
+          echo "Producción verificada OK: https://pasega.vercel.app"

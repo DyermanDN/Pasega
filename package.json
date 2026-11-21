@@ -4,6 +4,8 @@
   "private": true,
   "description": "Panel de Finanzas, Ventas, Rentabilidad y Cobranzas para PASEGA Importaciones (Vercel + Supabase)",
   "scripts": {
-    "dev": "npx vercel dev"
+    "dev": "npx vercel dev",
+    "check": "node scripts/validate.js",
+    "test": "node scripts/validate.js"
   }
 }

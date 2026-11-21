@@ -35,6 +35,7 @@ for (const rel of [
   'api/config.js',
   'public/supabase-bridge.js',
   'scripts/backup-local.js',
+  'scripts/enviar-cambio.js',
   'scripts/validate.js'
 ]) {
   try {
@@ -58,6 +59,25 @@ try {
     fail('public/index.html no incluye @supabase/supabase-js');
   } else {
     ok('public/index.html incluye @supabase/supabase-js');
+  }
+  const requiredDbKeys = [
+    "'ventas'",
+    "'compras'",
+    "'sistema/reporte'",
+    "'config/ajustes'",
+    "'config/confirmados'",
+    "'catalogo'",
+    "'inventario/stock'",
+    "'cobranza/reporte'",
+    "'cobranza/ajustes'",
+    "'cobGestiones'",
+    "'cobHistorial'"
+  ];
+  const missingKeys = requiredDbKeys.filter((k) => !html.includes(k));
+  if (missingKeys.length) {
+    fail(`Faltan rutas críticas de base de datos en public/index.html: ${missingKeys.join(', ')}`);
+  } else {
+    ok('Todas las colecciones/rutas de Supabase siguen intactas en public/index.html');
   }
   const scripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)];
   if (scripts.length < 2) {

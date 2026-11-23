@@ -102,13 +102,15 @@
               <p>Conecta tu proyecto de Supabase</p>
             </div>
           </div>
-          <p class="psg-info">${reason || 'Aún no se detectaron las variables de entorno de Supabase en este servidor.'}</p>
+          <p class="psg-info" id="psg-setup-reason"></p>
           <div class="psg-code">SUPABASE_URL=https://tu-proyecto.supabase.co<br>SUPABASE_ANON_KEY=tu-clave-anon</div>
           <p class="psg-info">1. Ejecuta <b>supabase/schema.sql</b> en tu proyecto de Supabase.<br>2. Agrega esas variables en <b>Vercel → Settings → Environment Variables</b> y redespliega.<br>3. Crea tu usuario en <b>Supabase → Authentication → Users</b>.</p>
           <button type="button" class="psg-btn" id="psg-reload">Ya lo configuré · Recargar</button>
           <button type="button" class="psg-btn sec" id="psg-local">Continuar sin nube (solo vista local)</button>
         </div>
       `;
+      el.querySelector('#psg-setup-reason').textContent =
+        reason || 'Aún no se detectaron las variables de entorno de Supabase en este servidor.';
       document.body.appendChild(el);
       el.querySelector('#psg-reload').addEventListener('click', () => window.location.reload());
       el.querySelector('#psg-local').addEventListener('click', () => {
@@ -193,11 +195,19 @@
     const bar = document.createElement('div');
     bar.id = 'psg-userbar';
     bar.className = 'psg-userbar';
-    bar.innerHTML = `
-      <div class="psg-email" title="${email}">${email}</div>
-      <div class="psg-role">${roleLabel} · Supabase</div>
-      <button type="button" class="psg-logout" id="psg-logout-btn">Cerrar sesión</button>
-    `;
+    const emailEl = document.createElement('div');
+    emailEl.className = 'psg-email';
+    emailEl.title = String(email || '');
+    emailEl.textContent = String(email || '');
+    const roleEl = document.createElement('div');
+    roleEl.className = 'psg-role';
+    roleEl.textContent = `${roleLabel} · Supabase`;
+    const logoutBtn = document.createElement('button');
+    logoutBtn.type = 'button';
+    logoutBtn.className = 'psg-logout';
+    logoutBtn.id = 'psg-logout-btn';
+    logoutBtn.textContent = 'Cerrar sesión';
+    bar.append(emailEl, roleEl, logoutBtn);
     bottom.appendChild(bar);
 
     bar.querySelector('#psg-logout-btn').addEventListener('click', async () => {

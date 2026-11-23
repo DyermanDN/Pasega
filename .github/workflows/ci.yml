@@ -21,3 +21,25 @@ jobs:
 
       - name: Ejecutar validaciones y pruebas de seguridad
         run: npm test
+
+      - name: Revisar si toca archivos críticos de BD o despliegue
+        if: github.event_name == 'pull_request' || github.ref == 'refs/heads/desarrollo'
+        run: |
+          git fetch origin main --depth=1
+          CHANGED=$(git diff --name-only origin/main...HEAD || true)
+          echo "### Archivos modificados en este PR" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          echo "$CHANGED" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          SENSITIVE=$(echo "$CHANGED" | grep -E '^(supabase/|api/|vercel\.json|\.github/|public/supabase-bridge\.js|scripts/validate\.js|Jenkinsfile)' || true)
+          if [ -n "$SENSITIVE" ]; then
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "> [!WARNING]" >> "$GITHUB_STEP_SUMMARY"
+            echo "> **ATENCIÓN @DyermanDN:** Este PR modifica archivos críticos de base de datos, seguridad o CI/CD:" >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+            echo "$SENSITIVE" >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "✅ No se modificaron archivos críticos de BD, autenticación ni despliegue." >> "$GITHUB_STEP_SUMMARY"
+          fi

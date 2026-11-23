@@ -1,0 +1,72 @@
+name: Auto PR (desarrollo → main)
+
+on:
+  push:
+    branches: [desarrollo]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  crear-pr:
+    name: Crear o actualizar Pull Request
+    runs-on: ubuntu-latest
+    steps:
+      - name: Crear PR automático hacia main si no existe
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const head = `${owner}:desarrollo`;
+            const base = 'main';
+
+            const { data: openPrs } = await github.rest.pulls.list({
+              owner,
+              repo,
+              state: 'open',
+              head,
+              base
+            });
+
+            if (openPrs.length > 0) {
+              const pr = openPrs[0];
+              core.info(`Ya existe un Pull Request abierto (#${pr.number}): ${pr.html_url}`);
+              return;
+            }
+
+            const commitMsg = (context.payload.head_commit && context.payload.head_commit.message) || 'Nuevos cambios desde desarrollo';
+            const title = `Cambios para revisión: ${commitMsg.split('\n')[0].slice(0, 70)}`;
+            const body = [
+              '## Pull Request creado automáticamente desde `desarrollo`',
+              '',
+              `**Último cambio:** ${commitMsg}`,
+              '',
+              '### Revisión para @DyermanDN',
+              '1. Verifica que el check **Validar Pasega** esté en verde.',
+              '2. Revisa los archivos modificados y la vista previa de Vercel (si aplica).',
+              '3. Aprueba y haz **Merge** a `main`.',
+              '4. Luego lanza el Job **Actions → Deploy Producción (Pasega) → Run workflow** para publicar en https://pasega.vercel.app.'
+            ].join('\n');
+
+            const { data: created } = await github.rest.pulls.create({
+              owner,
+              repo,
+              title,
+              head: 'desarrollo',
+              base,
+              body
+            });
+
+            try {
+              await github.rest.pulls.requestReviewers({
+                owner,
+                repo,
+                pull_number: created.number,
+                reviewers: ['DyermanDN']
+              });
+            } catch (e) {
+              core.info('No se pudo asignar revisor automático (es normal si el autor es el mismo dueño).');
+            }
+
+            core.info(`Pull Request creado (#${created.number}): ${created.html_url}`);

@@ -710,6 +710,31 @@
     return readyPromise;
   }
 
+  window.PASEGA_AUTH = {
+    getClient() {
+      return activeClient;
+    },
+    getRole() {
+      return activeRole;
+    },
+    getUser() {
+      return activeUser;
+    },
+    async getAccessToken() {
+      if (!activeClient) return null;
+      const { data } = await activeClient.auth.getSession();
+      return (data && data.session && data.session.access_token) || null;
+    },
+    async ready() {
+      await boot();
+      return {
+        client: activeClient,
+        user: activeUser,
+        role: activeRole
+      };
+    }
+  };
+
   // Expone la interfaz compatible esperada por Finanzas y Cobranzas
   window.claude = {
     async use(capability) {

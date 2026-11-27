@@ -21,7 +21,7 @@
   const MOTIVOS_GRE = [
     ['01', '01 · Venta'],
     ['02', '02 · Compra'],
-    ['04', '04 · Traslado entre establecimientos de la misma empresa'],
+    ['04', '04 · Traslado entre establecimientos'],
     ['08', '08 · Importación'],
     ['13', '13 · Otros']
   ];
@@ -42,6 +42,96 @@
     return dt.toISOString().slice(0, 10);
   };
   const dmy = (iso) => (iso && iso.length >= 10 ? `${iso.slice(8, 10)}/${iso.slice(5, 7)}/${iso.slice(0, 4)}` : '—');
+
+  function injectStyles() {
+    if (document.getElementById('sunat-ui-styles')) return;
+    const s = document.createElement('style');
+    s.id = 'sunat-ui-styles';
+    s.textContent = `
+      #sunat-host main{max-width:1260px;margin:0 auto;padding:18px 24px 64px}
+      .sn-modebar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:9px 14px;border-radius:9px;margin-bottom:16px;font-size:12.5px;border:1px solid var(--line)}
+      .sn-modebar.demo{background:var(--warn-bg);color:var(--warn);border-color:transparent}
+      .sn-modebar.prod{background:var(--good-bg);color:var(--good);border-color:transparent}
+      .sn-modebar.err{background:var(--bad-bg);color:var(--bad);border-color:transparent}
+      .sn-modebar .sn-ml{display:flex;align-items:center;gap:8px;min-width:0}
+      .sn-modebar button.sn-link{background:none;border:0;color:inherit;font-weight:600;text-decoration:underline;cursor:pointer;padding:0;white-space:nowrap}
+
+      .sn-work{display:grid;grid-template-columns:minmax(0,1fr) 332px;gap:18px;align-items:start}
+      .sn-col-main{display:flex;flex-direction:column;gap:16px;min-width:0}
+      .sn-col-side{position:sticky;top:18px;display:flex;flex-direction:column;gap:14px;min-width:0}
+      @media (max-width:1080px){.sn-work{grid-template-columns:minmax(0,1fr)}.sn-col-side{position:static}}
+
+      .sn-box{background:var(--surface-1);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px}
+      .sn-box-h{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+      .sn-box-h h2{margin:0;font-size:14.5px;font-weight:600;color:var(--text-primary)}
+      .sn-box-h .sn-sub{font-size:12px;color:var(--text-muted)}
+
+      .sn-topstrip{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:12px 16px;background:var(--surface-1);border:1px solid var(--line);border-radius:var(--r)}
+      .sn-topstrip-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+      .sn-inline-f{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--text-secondary);font-weight:500}
+      .sn-inline-f select,.sn-inline-f input{min-height:34px;padding:5px 9px;font-size:13px}
+
+      .sn-g12{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:12px}
+      .sn-f{display:flex;flex-direction:column;gap:5px;min-width:0}
+      .sn-f > span{font-size:12px;font-weight:500;color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      .sn-f input,.sn-f select{width:100%;min-height:36px;padding:7px 10px}
+      .c-2{grid-column:span 2}.c-3{grid-column:span 3}.c-4{grid-column:span 4}.c-5{grid-column:span 5}
+      .c-6{grid-column:span 6}.c-7{grid-column:span 7}.c-8{grid-column:span 8}.c-9{grid-column:span 9}.c-12{grid-column:span 12}
+      @media (max-width:740px){.sn-g12{grid-template-columns:repeat(6,minmax(0,1fr))}.c-2,.c-3{grid-column:span 3}.c-4,.c-5,.c-6,.c-7,.c-8,.c-9,.c-12{grid-column:span 6}}
+      @media (max-width:500px){.sn-g12{grid-template-columns:1fr}.sn-g12 > *{grid-column:span 1!important}}
+
+      .sn-input-btn{display:flex;align-items:stretch}
+      .sn-input-btn input{border-radius:8px 0 0 8px;border-right:0;flex:1;min-width:0}
+      .sn-input-btn button{border-radius:0 8px 8px 0;min-height:36px;padding:0 13px;white-space:nowrap}
+
+      .sn-search-row{display:flex;gap:10px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+      .sn-search-wrap{position:relative;flex:1;min-width:220px}
+      .sn-search-wrap input{width:100%;min-height:36px}
+      .sn-drop-list{position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:25;background:var(--surface-1);border:1px solid var(--line-strong);border-radius:9px;box-shadow:0 10px 28px rgba(10,20,40,.16);max-height:240px;overflow:auto}
+      .sn-drop-item{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);padding:9px 12px;cursor:pointer;font-size:13px;color:var(--text-primary)}
+      .sn-drop-item:last-child{border-bottom:0}
+      .sn-drop-item:hover,.sn-drop-item:focus{background:var(--navy-soft);outline:none}
+
+      .sn-tbl-wrap{overflow:auto;border:1px solid var(--line);border-radius:8px}
+      .sn-tbl{width:100%;border-collapse:collapse;font-size:13px}
+      .sn-tbl th{font-size:11px;font-weight:600;color:var(--text-secondary);background:var(--surface-2);padding:8px 8px;text-align:left;border-bottom:1px solid var(--line-strong);white-space:nowrap;text-transform:none;letter-spacing:0}
+      .sn-tbl th.num,.sn-tbl td.num{text-align:right}
+      .sn-tbl td{padding:6px 6px;border-bottom:1px solid var(--line);vertical-align:middle}
+      .sn-tbl tbody tr:last-child td{border-bottom:0}
+      .sn-tbl input{width:100%;min-height:33px;padding:5px 8px;font-size:13px;border-radius:6px}
+      .sn-rm{width:28px;height:28px;border-radius:6px;border:1px solid transparent;background:none;color:var(--text-muted);cursor:pointer;display:grid;place-items:center;font-size:14px}
+      .sn-rm:hover{background:var(--bad-bg);color:var(--bad)}
+
+      .sn-side-box{background:var(--surface-1);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;display:flex;flex-direction:column;gap:14px}
+      .sn-side-box h3{margin:0;font-size:14px;font-weight:600}
+      .sn-seg-full{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--line-strong);border-radius:8px;overflow:hidden;background:var(--surface-2)}
+      .sn-seg-full button{border:0;background:none;padding:8px 10px;cursor:pointer;font-size:13px;font-weight:500;color:var(--text-secondary)}
+      .sn-seg-full button.on{background:var(--navy);color:#fff}
+      @media (prefers-color-scheme: dark){.sn-seg-full button.on{color:#0d1a2b}}
+
+      .sn-pills{display:flex;gap:6px;flex-wrap:wrap}
+      .sn-pill{border:1px solid var(--line-strong);background:var(--surface-1);border-radius:999px;padding:4px 10px;font-size:12px;cursor:pointer;color:var(--text-secondary)}
+      .sn-pill:hover{border-color:var(--navy);color:var(--text-primary)}
+
+      .sn-totbox{background:var(--surface-2);border-radius:9px;padding:12px 14px;display:flex;flex-direction:column;gap:6px}
+      .sn-totrow{display:flex;justify-content:space-between;align-items:baseline;font-size:13px;color:var(--text-secondary)}
+      .sn-totrow b{color:var(--text-primary);font-family:"IBM Plex Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums}
+      .sn-totmain{display:flex;justify-content:space-between;align-items:baseline;padding-top:9px;margin-top:4px;border-top:1px solid var(--line-strong);font-size:15px;font-weight:600}
+      .sn-totmain b{font-size:20px;font-family:"IBM Plex Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums;color:var(--navy)}
+
+      .sn-submit{width:100%;min-height:42px;font-size:14.5px;font-weight:600}
+      .sn-ghost{width:100%;background:none;border:0;color:var(--text-muted);font-size:12.5px;cursor:pointer;padding:4px}
+      .sn-ghost:hover{color:var(--text-primary);text-decoration:underline}
+
+      .sn-client-chip{display:inline-flex;align-items:center;gap:6px;margin-top:8px;padding:4px 10px;border-radius:999px;background:var(--good-bg);color:var(--good);font-size:12px;font-weight:500}
+      .sn-client-chip.warn{background:var(--warn-bg);color:var(--warn)}
+
+      .sn-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:16px}
+      @media (max-width:760px){.sn-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+      .sn-status-row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 12px;background:var(--surface-2);border-radius:8px;font-size:13px}
+    `;
+    document.head.appendChild(s);
+  }
 
   const ST = {
     visible: false,
@@ -105,6 +195,7 @@
       cliente_telefono: '',
       cliente_email: '',
       cliente_sunat_info: '',
+      cliente_sunat_ok: true,
       observaciones: '',
       sincronizar: true,
       items: [{ codigo: '', descripcion: '', unidad: 'UND', cant: 1, precio: '' }]
@@ -275,7 +366,6 @@
       if (!ST.ncForm) ST.ncForm = newNcForm(null);
       if (!ST.greForm) ST.greForm = newGreForm(null);
 
-      // Suscripción en tiempo real a nuevos comprobantes
       if (!ST._subscribed) {
         ST._subscribed = true;
         client
@@ -323,7 +413,6 @@
     const meta = TIPOS[c.tipo] || TIPOS['01'];
     const sym = c.moneda === 'PEN' ? 'S/' : 'US$';
 
-    // Marca de agua DEMO
     if (isDemo) {
       doc.setTextColor(235, 210, 210);
       doc.setFont('helvetica', 'bold');
@@ -331,7 +420,6 @@
       doc.text('DEMO · SIN VALIDEZ SUNAT', 105, 155, { align: 'center', angle: 35 });
     }
 
-    // Cabecera emisor
     doc.setTextColor(...NAVY);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(14);
@@ -340,9 +428,8 @@
     doc.setFontSize(9);
     doc.setTextColor(80, 80, 80);
     if (ST.config.direccion) doc.text(String(ST.config.direccion), 14, 24);
-    doc.text(`RUC: ${ST.config.ruc || '(Configurar en Facturación -> Configuración)'}`, 14, 29);
+    doc.text(`RUC: ${ST.config.ruc || '(Configurar en Facturación → Configuración)'}`, 14, 29);
 
-    // Recuadro derecho del comprobante
     doc.setDrawColor(...NAVY);
     doc.setLineWidth(0.5);
     doc.roundedRect(130, 12, 66, 26, 2, 2);
@@ -356,7 +443,6 @@
     doc.setTextColor(...ORANGE);
     doc.text(String(c.doc_codigo || ''), 163, 33.5, { align: 'center' });
 
-    // Datos del cliente
     doc.setDrawColor(210, 215, 222);
     doc.line(14, 42, 196, 42);
     doc.setTextColor(30, 35, 42);
@@ -403,7 +489,6 @@
       startY = 82;
     }
 
-    // Tabla de ítems
     const head = c.tipo === '09'
       ? [['#', 'Código', 'Descripción', 'Unid.', 'Cantidad']]
       : [['#', 'Código', 'Descripción', 'Cant.', 'V. Unit.', 'Importe']];
@@ -434,7 +519,7 @@
     if (c.tipo !== '09') {
       doc.setFontSize(9.5);
       doc.setFont('helvetica', 'normal');
-      doc.text(`Op. Gravada (Subtotal):`, 132, y);
+      doc.text('Op. Gravada (Subtotal):', 132, y);
       doc.text(`${sym} ${fmt(c.subtotal)}`, 196, y, { align: 'right' });
       y += 5.5;
       doc.text(`IGV (${ST.config.igv_pct || 18}%):`, 132, y);
@@ -498,32 +583,40 @@
       .slice(0, 8);
   }
 
-  function renderBanner() {
+  function renderModeBar() {
     const isProd = ST.config.modo === 'produccion' && ST.status.nubefactConfigured;
     if (ST.schemaMissing) {
-      return `<div class="callout bad"><div><b>Falta activar las tablas de SUNAT en Supabase.</b> Ejecuta el archivo <code>supabase/sunat_schema.sql</code> en <b>Supabase → SQL Editor → Run</b> y luego recarga esta página.</div></div>`;
+      return `<div class="sn-modebar err">
+        <div class="sn-ml"><b>Faltan las tablas SUNAT en Supabase.</b> Ejecuta <code>supabase/sunat_schema.sql</code> en el SQL Editor y recarga.</div>
+      </div>`;
     }
     if (isProd) {
-      return `<div class="callout good"><div><b>NUBEFACT CONECTADO · MODO PRODUCCIÓN SUNAT.</b> Los comprobantes emitidos aquí se envían oficialmente a SUNAT con validez tributaria.</div></div>`;
+      return `<div class="sn-modebar prod">
+        <div class="sn-ml"><b>Producción SUNAT activa (Nubefact)</b> — Los comprobantes emitidos tienen validez tributaria oficial.</div>
+        <button type="button" class="sn-link" data-stab="config">Ver configuración</button>
+      </div>`;
     }
-    return `<div class="callout warn"><div><b>MODO DEMO (Pruebas):</b> Puedes emitir Facturas, Boletas, Notas de Crédito y Guías para probar todo el flujo (sin enviar nada real a SUNAT). Cuando tengas tu cuenta de <b>Nubefact</b>, agrega <code>NUBEFACT_URL</code> y <code>NUBEFACT_TOKEN</code> en Vercel y cambia a Producción en la pestaña <b>Configuración</b>.</div></div>`;
+    return `<div class="sn-modebar demo">
+      <div class="sn-ml"><b>Modo pruebas (Demo)</b> — Los comprobantes son simulados y no se envían a SUNAT real.</div>
+      <button type="button" class="sn-link" data-stab="config">Conectar Nubefact</button>
+    </div>`;
   }
 
   function renderLastResult() {
     if (!ST.lastResult) return '';
     const { comprobante: c, synced } = ST.lastResult;
     const syncNotes = [];
-    if (synced && synced.ventas) syncNotes.push('agregado a Finanzas (Ventas)');
-    if (synced && synced.cobranzas) syncNotes.push('agregado a Cobranzas (Crédito)');
-    return `<div class="callout good" style="flex-direction:column;gap:8px">
-      <div><b>✓ Comprobante emitido: ${esc(c.doc_codigo)}</b> (${esc((TIPOS[c.tipo] || {}).corto || c.tipo)} · ${esc(c.modo.toUpperCase())}) — ${esc(c.sunat_mensaje || '')}${syncNotes.length ? `<br><span class="small">Sincronizado automáticamente: ${esc(syncNotes.join(' y '))}.</span>` : ''}</div>
+    if (synced && synced.ventas) syncNotes.push('Finanzas (Ventas)');
+    if (synced && synced.cobranzas) syncNotes.push('Cobranzas (Crédito)');
+    return `<div class="callout good" style="flex-direction:column;gap:8px;margin-bottom:16px">
+      <div><b>✓ Comprobante emitido: ${esc(c.doc_codigo)}</b> (${esc((TIPOS[c.tipo] || {}).corto || c.tipo)})${syncNotes.length ? ` · Sincronizado con ${esc(syncNotes.join(' y '))}.` : ''}</div>
       <div class="row">
-        <button type="button" class="btn sm primary" data-sact="pdf" data-id="${esc(c.id)}">${c.pdf_url ? 'Abrir PDF oficial' : 'Descargar PDF (Demo)'}</button>
+        <button type="button" class="btn sm primary" data-sact="pdf" data-id="${esc(c.id)}">${c.pdf_url ? 'Abrir PDF oficial' : 'Descargar PDF'}</button>
         ${c.xml_url ? `<a class="btn sm" href="${esc(c.xml_url)}" target="_blank" rel="noopener">XML</a>` : ''}
         ${c.cdr_url ? `<a class="btn sm" href="${esc(c.cdr_url)}" target="_blank" rel="noopener">CDR</a>` : ''}
         <a class="btn sm cb-wa" href="${esc(waComprobanteUrl(c))}" target="_blank" rel="noopener">Enviar WhatsApp</a>
         ${c.tipo === '01' || c.tipo === '03' ? `<button type="button" class="btn sm" data-sact="to-gre" data-id="${esc(c.id)}">Generar Guía (GRE)</button>` : ''}
-        <button type="button" class="btn sm" data-sact="clear-res">Cerrar aviso</button>
+        <button type="button" class="btn sm" data-sact="clear-res">Cerrar</button>
       </div>
     </div>`;
   }
@@ -535,168 +628,193 @@
     const T = calcTotals(F.items, F.precio_incluye_igv);
     const sym = F.moneda === 'PEN' ? 'S/' : 'US$';
     const matches = catalogMatches(ST.catQuery);
-    const sellers = (window.PASEGA_CTX && window.PASEGA_CTX.getVendedores ? window.PASEGA_CTX.getVendedores() : []);
+    const sellers = window.PASEGA_CTX && window.PASEGA_CTX.getVendedores ? window.PASEGA_CTX.getVendedores() : [];
+    const isProd = ST.config.modo === 'produccion' && ST.status.nubefactConfigured;
 
     return `
       ${renderLastResult()}
-      <div class="card">
-        <h2>Emitir Factura o Boleta Electrónica</h2>
-        <p class="hint">Consulta el RUC o DNI, agrega productos desde tu catálogo y elige si tus precios incluyen o no IGV.</p>
-        <div class="form-grid">
-          <label>Tipo de comprobante
-            <select data-ef="tipo">
-              <option value="01" ${F.tipo === '01' ? 'selected' : ''}>Factura Electrónica (01 · RUC)</option>
-              <option value="03" ${F.tipo === '03' ? 'selected' : ''}>Boleta de Venta (03 · DNI/RUC)</option>
-            </select>
-          </label>
-          <label>Serie
-            <select data-ef="serie">
-              ${sers.map((s) => `<option value="${esc(s.serie)}" ${F.serie === s.serie ? 'selected' : ''}>${esc(s.serie)} (próx. #${s.ultimo_numero + 1})</option>`).join('')}
-            </select>
-          </label>
-          <label>Fecha de emisión
-            <input type="date" data-ef="fecha_emision" value="${esc(F.fecha_emision)}">
-          </label>
-          <label>Moneda
-            <select data-ef="moneda">
-              <option value="USD" ${F.moneda === 'USD' ? 'selected' : ''}>Dólares (US$)</option>
-              <option value="PEN" ${F.moneda === 'PEN' ? 'selected' : ''}>Soles (S/)</option>
-            </select>
-          </label>
-          <label>Tipo de cambio
-            <input type="number" step="0.001" data-ef="tipo_cambio" value="${esc(F.tipo_cambio)}">
-          </label>
-          <label>Vendedor
-            <input type="text" list="psg-vends-dl" data-ef="vendedor" value="${esc(F.vendedor)}" placeholder="Nombre del vendedor">
-            <datalist id="psg-vends-dl">${sellers.map((v) => `<option value="${esc(v)}">`).join('')}</datalist>
-          </label>
-        </div>
-
-        <h3 class="fh">1 · Datos del cliente</h3>
-        <div class="form-grid">
-          <label>Documento
-            <select data-ef="cliente_tipo_doc">
-              <option value="6" ${F.cliente_tipo_doc === '6' ? 'selected' : ''}>RUC (11 dígitos)</option>
-              <option value="1" ${F.cliente_tipo_doc === '1' ? 'selected' : ''}>DNI (8 dígitos)</option>
-              <option value="0" ${F.cliente_tipo_doc === '0' ? 'selected' : ''}>Sin documento (Varios)</option>
-            </select>
-          </label>
-          <label>Número RUC / DNI
-            <div style="display:flex;gap:6px">
-              <input type="text" data-ef="cliente_doc" value="${esc(F.cliente_doc)}" placeholder="${F.cliente_tipo_doc === '6' ? '20123456789' : '12345678'}" style="flex:1;min-width:120px">
-              <button type="button" class="btn sm primary" data-sact="lookup-client" ${ST.busy ? 'disabled' : ''}>Buscar</button>
+      <div class="sn-work">
+        <div class="sn-col-main">
+          <!-- Barra superior del comprobante -->
+          <div class="sn-topstrip">
+            <div class="seg" role="group" aria-label="Tipo de comprobante">
+              <button type="button" class="${F.tipo === '01' ? 'on' : ''}" data-sact="set-tipo" data-val="01">Factura (01)</button>
+              <button type="button" class="${F.tipo === '03' ? 'on' : ''}" data-sact="set-tipo" data-val="03">Boleta (03)</button>
             </div>
-          </label>
-          <label style="grid-column:span 2">Razón Social / Nombre completo
-            <input type="text" data-ef="cliente_nombre" value="${esc(F.cliente_nombre)}" placeholder="EMPRESA CLIENTE S.A.C.">
-          </label>
-          <label style="grid-column:span 2">Dirección fiscal
-            <input type="text" data-ef="cliente_direccion" value="${esc(F.cliente_direccion)}" placeholder="Av. ...">
-          </label>
-          <label>Teléfono (WhatsApp / Cobranzas)
-            <input type="text" data-ef="cliente_telefono" value="${esc(F.cliente_telefono)}" placeholder="999888777">
-          </label>
-          <label>Correo (para envío automático)
-            <input type="text" data-ef="cliente_email" value="${esc(F.cliente_email)}" placeholder="facturacion@cliente.com">
-          </label>
-        </div>
-        ${F.cliente_sunat_info ? `<div class="small muted" style="margin:-6px 0 10px">${esc(F.cliente_sunat_info)}</div>` : ''}
-        ${ST.clientes.length ? `<div class="row" style="margin-bottom:10px"><label class="small muted" style="display:flex;align-items:center;gap:8px">Clientes recientes:
-          <select data-sact-sel="pick-client" style="min-height:30px;padding:3px 8px;max-width:340px">
-            <option value="">— Seleccionar cliente guardado —</option>
-            ${ST.clientes.slice(0, 80).map((c) => `<option value="${esc(c.tipo_doc + '|' + c.numero_doc)}">${esc(c.numero_doc)} · ${esc(c.razon_social)}</option>`).join('')}
-          </select></label></div>` : ''}
-
-        <h3 class="fh">2 · Productos y precios</h3>
-        <div class="row" style="margin-bottom:12px;align-items:center">
-          <div class="seg" role="group" aria-label="Modo de precios IGV">
-            <button type="button" class="${!F.precio_incluye_igv ? 'on' : ''}" data-sact="igv-mode" data-val="0">Precios SIN IGV (Valor Unit.)</button>
-            <button type="button" class="${F.precio_incluye_igv ? 'on' : ''}" data-sact="igv-mode" data-val="1">Precios CON IGV incluido (${ST.config.igv_pct || 18}%)</button>
-          </div>
-          <div style="position:relative;flex:1;min-width:240px">
-            <input type="search" id="sunat-cat-q" value="${esc(ST.catQuery)}" placeholder="Buscar producto en tu catálogo (código o nombre)…" style="width:100%">
-            ${matches.length ? `<div style="position:absolute;left:0;right:0;top:100%;z-index:20;background:var(--surface-1);border:1px solid var(--line-strong);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.15);margin-top:4px;max-height:240px;overflow:auto">
-              ${matches.map((p) => `<div data-sact="add-cat" data-code="${esc(p.code)}" data-name="${esc(p.name)}" style="padding:8px 10px;cursor:pointer;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:10px;font-size:13px">
-                <div><b>${esc(p.code || 'S/C')}</b> · ${esc(p.name)}</div>
-                <span class="muted small">${p.stock != null ? `Stock: ${fmt(p.stock, 0)}` : ''}</span>
-              </div>`).join('')}
-            </div>` : ''}
-          </div>
-          <button type="button" class="btn sm" data-sact="add-line">+ Línea libre</button>
-        </div>
-
-        <div class="tbl-wrap">
-          <table class="lines">
-            <thead>
-              <tr>
-                <th style="width:120px">Código</th>
-                <th>Descripción</th>
-                <th style="width:82px">Unid.</th>
-                <th class="num" style="width:88px">Cant.</th>
-                <th class="num" style="width:125px">${F.precio_incluye_igv ? 'P. Unit (c/IGV)' : 'V. Unit (s/IGV)'}</th>
-                <th class="num" style="width:115px">Subtotal</th>
-                <th class="num" style="width:115px">Total</th>
-                <th style="width:42px"></th>
-              </tr>
-            </thead>
-            <tbody>
-              ${F.items.map((it, idx) => {
-                const ln = T.lines[idx] || { vv: 0, tot: 0 };
-                return `<tr>
-                  <td><input type="text" data-ei="${idx}" data-k="codigo" value="${esc(it.codigo)}" placeholder="COD"></td>
-                  <td><input type="text" data-ei="${idx}" data-k="descripcion" value="${esc(it.descripcion)}" placeholder="Descripción del repuesto/producto"></td>
-                  <td><input type="text" data-ei="${idx}" data-k="unidad" value="${esc(it.unidad || 'UND')}"></td>
-                  <td><input type="number" step="any" min="0" data-ei="${idx}" data-k="cant" value="${esc(it.cant)}" style="text-align:right"></td>
-                  <td><input type="number" step="any" min="0" data-ei="${idx}" data-k="precio" value="${esc(it.precio)}" placeholder="0.00" style="text-align:right"></td>
-                  <td class="num mono">${sym} ${fmt(ln.vv)}</td>
-                  <td class="num mono"><b>${sym} ${fmt(ln.tot)}</b></td>
-                  <td><button type="button" class="btn sm danger" data-sact="del-line" data-idx="${idx}" title="Quitar">✕</button></td>
-                </tr>`;
-              }).join('')}
-            </tbody>
-          </table>
-        </div>
-
-        <h3 class="fh">3 · Condición de pago y totales</h3>
-        <div class="grid2" style="align-items:start">
-          <div>
-            <div class="form-grid">
-              <label>Forma de pago
-                <select data-ef="forma_pago">
-                  <option value="CONTADO" ${F.forma_pago === 'CONTADO' ? 'selected' : ''}>Contado</option>
-                  <option value="CREDITO" ${F.forma_pago === 'CREDITO' ? 'selected' : ''}>Crédito (entra a Cobranzas)</option>
+            <div class="sn-topstrip-right">
+              <label class="sn-inline-f">Serie
+                <select data-ef="serie" aria-label="Serie">
+                  ${sers.map((s) => `<option value="${esc(s.serie)}" ${F.serie === s.serie ? 'selected' : ''}>${esc(s.serie)} · #${s.ultimo_numero + 1}</option>`).join('')}
                 </select>
               </label>
-              ${F.forma_pago === 'CREDITO' ? `<label>Fecha de vencimiento
-                <input type="date" data-ef="fecha_vcto" value="${esc(F.fecha_vcto)}">
-              </label>` : ''}
-            </div>
-            ${F.forma_pago === 'CREDITO' ? `<div class="row" style="margin:-6px 0 12px">
-              <span class="small muted">Plazo rápido:</span>
-              ${[15, 30, 45, 60].map((d) => `<button type="button" class="btn sm" data-sact="set-dias" data-d="${d}">+${d} días</button>`).join('')}
-            </div>` : ''}
-            <label class="small muted" style="display:flex;flex-direction:column;gap:4px;margin-bottom:10px">Observaciones (opcional)
-              <input type="text" data-ef="observaciones" value="${esc(F.observaciones)}" placeholder="Ej. Orden de compra, nota interna…">
-            </label>
-            <label class="chk">
-              <input type="checkbox" data-ef-chk="sincronizar" ${F.sincronizar ? 'checked' : ''}>
-              Sincronizar automáticamente con Finanzas (Ventas), Stock y Cobranzas
-            </label>
-          </div>
-          <div class="card" style="background:var(--surface-2);margin:0">
-            <div style="display:flex;justify-content:space-between;padding:4px 0"><span>Op. Gravada (Subtotal)</span><b class="mono">${sym} ${fmt(T.sub)}</b></div>
-            <div style="display:flex;justify-content:space-between;padding:4px 0"><span>IGV (${ST.config.igv_pct || 18}%)</span><b class="mono">${sym} ${fmt(T.igv)}</b></div>
-            <div style="display:flex;justify-content:space-between;padding:10px 0 4px;margin-top:6px;border-top:1px solid var(--line-strong);font-size:18px">
-              <b>TOTAL A PAGAR</b><b class="mono">${sym} ${fmt(T.tot)}</b>
-            </div>
-            <div class="row" style="margin-top:14px;justify-content:flex-end">
-              <button type="button" class="btn" data-sact="reset-emit">Limpiar</button>
-              <button type="button" class="btn primary" data-sact="submit-emit" ${ST.busy || !canWrite() || ST.schemaMissing ? 'disabled' : ''}>
-                ${ST.busy ? 'Emitiendo…' : (ST.config.modo === 'produccion' && ST.status.nubefactConfigured ? 'Emitir a SUNAT' : 'Emitir (Modo Demo)')}
-              </button>
+              <label class="sn-inline-f">Fecha
+                <input type="date" data-ef="fecha_emision" value="${esc(F.fecha_emision)}" aria-label="Fecha de emisión">
+              </label>
+              <div class="seg" role="group" aria-label="Moneda">
+                <button type="button" class="${F.moneda === 'USD' ? 'on' : ''}" data-sact="set-moneda" data-val="USD">US$</button>
+                <button type="button" class="${F.moneda === 'PEN' ? 'on' : ''}" data-sact="set-moneda" data-val="PEN">S/</button>
+              </div>
             </div>
           </div>
+
+          <!-- Bloque Cliente -->
+          <section class="sn-box">
+            <div class="sn-box-h">
+              <h2>Cliente</h2>
+              ${ST.clientes.length ? `<select data-sact-sel="pick-client" aria-label="Seleccionar cliente guardado" style="min-height:30px;padding:3px 9px;font-size:12.5px;max-width:290px">
+                <option value="">Clientes guardados (${ST.clientes.length})…</option>
+                ${ST.clientes.slice(0, 80).map((c) => `<option value="${esc(c.tipo_doc + '|' + c.numero_doc)}">${esc(c.numero_doc)} · ${esc(c.razon_social)}</option>`).join('')}
+              </select>` : '<span class="sn-sub">Consulta automática por RUC o DNI</span>'}
+            </div>
+            <div class="sn-g12">
+              <label class="sn-f c-2">
+                <span>Documento</span>
+                <select data-ef="cliente_tipo_doc">
+                  <option value="6" ${F.cliente_tipo_doc === '6' ? 'selected' : ''}>RUC</option>
+                  <option value="1" ${F.cliente_tipo_doc === '1' ? 'selected' : ''}>DNI</option>
+                  <option value="0" ${F.cliente_tipo_doc === '0' ? 'selected' : ''}>Varios</option>
+                </select>
+              </label>
+              <label class="sn-f c-4">
+                <span>Número</span>
+                <div class="sn-input-btn">
+                  <input type="text" data-ef="cliente_doc" value="${esc(F.cliente_doc)}" placeholder="${F.cliente_tipo_doc === '6' ? '20123456789' : '12345678'}">
+                  <button type="button" class="btn primary" data-sact="lookup-client" ${ST.busy ? 'disabled' : ''}>Buscar</button>
+                </div>
+              </label>
+              <label class="sn-f c-6">
+                <span>Razón social o nombre</span>
+                <input type="text" data-ef="cliente_nombre" value="${esc(F.cliente_nombre)}" placeholder="EMPRESA CLIENTE S.A.C.">
+              </label>
+              <label class="sn-f c-6">
+                <span>Dirección fiscal</span>
+                <input type="text" data-ef="cliente_direccion" value="${esc(F.cliente_direccion)}" placeholder="Av. Principal 123, Lima">
+              </label>
+              <label class="sn-f c-3">
+                <span>Teléfono</span>
+                <input type="text" data-ef="cliente_telefono" value="${esc(F.cliente_telefono)}" placeholder="999 888 777">
+              </label>
+              <label class="sn-f c-3">
+                <span>Correo</span>
+                <input type="text" data-ef="cliente_email" value="${esc(F.cliente_email)}" placeholder="correo@empresa.com">
+              </label>
+            </div>
+            ${F.cliente_sunat_info ? `<div class="sn-client-chip ${F.cliente_sunat_ok ? '' : 'warn'}">${esc(F.cliente_sunat_info)}</div>` : ''}
+          </section>
+
+          <!-- Bloque Productos -->
+          <section class="sn-box">
+            <div class="sn-box-h">
+              <h2>Productos</h2>
+              <div class="seg" role="group" aria-label="Modo de precios">
+                <button type="button" class="${!F.precio_incluye_igv ? 'on' : ''}" data-sact="igv-mode" data-val="0">Sin IGV</button>
+                <button type="button" class="${F.precio_incluye_igv ? 'on' : ''}" data-sact="igv-mode" data-val="1">Con IGV (${ST.config.igv_pct || 18}%)</button>
+              </div>
+            </div>
+
+            <div class="sn-search-row">
+              <div class="sn-search-wrap">
+                <input type="search" id="sunat-cat-q" value="${esc(ST.catQuery)}" placeholder="Buscar en tu catálogo por código o nombre…">
+                ${matches.length ? `<div class="sn-drop-list" role="listbox">
+                  ${matches.map((p) => `<button type="button" class="sn-drop-item" data-sact="add-cat" data-code="${esc(p.code)}" data-name="${esc(p.name)}">
+                    <span><b>${esc(p.code || 'S/C')}</b> · ${esc(p.name)}</span>
+                    <span class="muted small">${p.stock != null ? `Stock: ${fmt(p.stock, 0)}` : ''}</span>
+                  </button>`).join('')}
+                </div>` : ''}
+              </div>
+              <button type="button" class="btn" data-sact="add-line">+ Agregar fila</button>
+            </div>
+
+            <div class="sn-tbl-wrap">
+              <table class="sn-tbl">
+                <thead>
+                  <tr>
+                    <th style="width:110px">Código</th>
+                    <th>Descripción</th>
+                    <th style="width:74px">Unid.</th>
+                    <th class="num" style="width:78px">Cant.</th>
+                    <th class="num" style="width:112px">${F.precio_incluye_igv ? 'Precio (c/IGV)' : 'Valor (s/IGV)'}</th>
+                    <th class="num" style="width:104px">Total</th>
+                    <th style="width:36px"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${F.items.map((it, idx) => {
+                    const ln = T.lines[idx] || { tot: 0 };
+                    return `<tr>
+                      <td><input type="text" data-ei="${idx}" data-k="codigo" value="${esc(it.codigo)}" placeholder="COD"></td>
+                      <td><input type="text" data-ei="${idx}" data-k="descripcion" value="${esc(it.descripcion)}" placeholder="Descripción del producto"></td>
+                      <td><input type="text" data-ei="${idx}" data-k="unidad" value="${esc(it.unidad || 'UND')}"></td>
+                      <td><input type="number" step="any" min="0" data-ei="${idx}" data-k="cant" value="${esc(it.cant)}" style="text-align:right"></td>
+                      <td><input type="number" step="any" min="0" data-ei="${idx}" data-k="precio" value="${esc(it.precio)}" placeholder="0.00" style="text-align:right"></td>
+                      <td class="num mono" data-line-tot="${idx}"><b>${sym} ${fmt(ln.tot)}</b></td>
+                      <td><button type="button" class="sn-rm" data-sact="del-line" data-idx="${idx}" aria-label="Quitar fila" title="Quitar fila">×</button></td>
+                    </tr>`;
+                  }).join('')}
+                </tbody>
+              </table>
+            </div>
+          </section>
         </div>
+
+        <!-- Columna derecha fija: Resumen y Emisión -->
+        <aside class="sn-col-side">
+          <div class="sn-side-box">
+            <h3>Pago y emisión</h3>
+
+            <div class="sn-g12">
+              <label class="sn-f c-7">
+                <span>Vendedor</span>
+                <input type="text" list="psg-vends-dl" data-ef="vendedor" value="${esc(F.vendedor)}" placeholder="Opcional">
+                <datalist id="psg-vends-dl">${sellers.map((v) => `<option value="${esc(v)}">`).join('')}</datalist>
+              </label>
+              <label class="sn-f c-5">
+                <span>Tipo de cambio</span>
+                <input type="number" step="0.001" data-ef="tipo_cambio" value="${esc(F.tipo_cambio)}">
+              </label>
+            </div>
+
+            <div class="sn-f">
+              <span>Forma de pago</span>
+              <div class="sn-seg-full" role="group" aria-label="Forma de pago">
+                <button type="button" class="${F.forma_pago === 'CONTADO' ? 'on' : ''}" data-sact="set-pago" data-val="CONTADO">Contado</button>
+                <button type="button" class="${F.forma_pago === 'CREDITO' ? 'on' : ''}" data-sact="set-pago" data-val="CREDITO">Crédito</button>
+              </div>
+            </div>
+
+            ${F.forma_pago === 'CREDITO' ? `
+              <div class="sn-f">
+                <span>Vencimiento</span>
+                <input type="date" data-ef="fecha_vcto" value="${esc(F.fecha_vcto)}">
+              </div>
+              <div class="sn-pills">
+                ${[15, 30, 45, 60].map((d) => `<button type="button" class="sn-pill" data-sact="set-dias" data-d="${d}">+${d} días</button>`).join('')}
+              </div>
+              <div class="small muted" style="margin-top:-6px">Entrará automáticamente a <b>Cobranzas</b>.</div>
+            ` : ''}
+
+            <label class="sn-f">
+              <span>Observaciones</span>
+              <input type="text" data-ef="observaciones" value="${esc(F.observaciones)}" placeholder="Orden de compra o nota">
+            </label>
+
+            <div class="sn-totbox">
+              <div class="sn-totrow"><span>Op. gravada</span><b id="sn-tot-sub">${sym} ${fmt(T.sub)}</b></div>
+              <div class="sn-totrow"><span>IGV (${ST.config.igv_pct || 18}%)</span><b id="sn-tot-igv">${sym} ${fmt(T.igv)}</b></div>
+              <div class="sn-totmain"><span>Total</span><b id="sn-tot-all">${sym} ${fmt(T.tot)}</b></div>
+            </div>
+
+            <label class="chk small">
+              <input type="checkbox" data-ef-chk="sincronizar" ${F.sincronizar ? 'checked' : ''}>
+              Sincronizar con Finanzas y Cobranzas
+            </label>
+
+            <button type="button" class="btn primary sn-submit" data-sact="submit-emit" ${ST.busy || !canWrite() || ST.schemaMissing ? 'disabled' : ''}>
+              ${ST.busy ? 'Emitiendo…' : (isProd ? `Emitir ${F.tipo === '03' ? 'Boleta' : 'Factura'} a SUNAT` : `Emitir ${F.tipo === '03' ? 'Boleta' : 'Factura'} (Demo)`)}
+            </button>
+            <button type="button" class="sn-ghost" data-sact="reset-emit">Limpiar formulario</button>
+          </div>
+        </aside>
       </div>`;
   }
 
@@ -710,74 +828,100 @@
 
     return `
       ${renderLastResult()}
-      <div class="card">
-        <h2>Emitir Nota de Crédito Electrónica (07)</h2>
-        <p class="hint">Selecciona la Factura o Boleta que deseas anular o ajustar. Se registrará en Finanzas y repondrá el stock.</p>
-        <div class="form-grid">
-          <label style="grid-column:span 2">Comprobante original a modificar
-            <select data-sact-sel="pick-nc-ref">
-              <option value="">— Selecciona una Factura o Boleta emitida —</option>
-              ${refs.map((c) => `<option value="${esc(c.id)}" ${F.ref_id === c.id ? 'selected' : ''}>${esc(c.doc_codigo)} · ${esc(c.cliente_nombre)} · ${c.moneda === 'PEN' ? 'S/' : 'US$'} ${fmt(c.total)} (${dmy(c.fecha_emision)})</option>`).join('')}
-            </select>
-          </label>
-          <label>O escribe N° de comprobante (si fue externo)
-            <input type="text" data-nf="ref_doc" value="${esc(F.ref_doc)}" placeholder="F002-00000001">
-          </label>
-          <label>Serie Nota de Crédito
-            <select data-nf="serie">
-              ${sers.map((s) => `<option value="${esc(s.serie)}" ${F.serie === s.serie ? 'selected' : ''}>${esc(s.serie)} (próx. #${s.ultimo_numero + 1})</option>`).join('')}
-            </select>
-          </label>
-          <label style="grid-column:span 2">Motivo SUNAT
-            <select data-nf="motivo_nc">
-              ${MOTIVOS_NC.map(([k, lbl]) => `<option value="${k}" ${F.motivo_nc === k ? 'selected' : ''}>${esc(lbl)}</option>`).join('')}
-            </select>
-          </label>
-          <label>Fecha emisión
-            <input type="date" data-nf="fecha_emision" value="${esc(F.fecha_emision)}">
-          </label>
-          <label>Moneda
-            <select data-nf="moneda">
-              <option value="USD" ${F.moneda === 'USD' ? 'selected' : ''}>Dólares (US$)</option>
-              <option value="PEN" ${F.moneda === 'PEN' ? 'selected' : ''}>Soles (S/)</option>
-            </select>
-          </label>
-          <label>RUC / DNI Cliente
-            <input type="text" data-nf="cliente_doc" value="${esc(F.cliente_doc)}">
-          </label>
-          <label style="grid-column:span 2">Cliente
-            <input type="text" data-nf="cliente_nombre" value="${esc(F.cliente_nombre)}">
-          </label>
+      <div class="sn-work">
+        <div class="sn-col-main">
+          <section class="sn-box">
+            <div class="sn-box-h">
+              <h2>Comprobante de referencia</h2>
+              <span class="sn-sub">Anula o ajusta una Factura o Boleta emitida</span>
+            </div>
+            <div class="sn-g12">
+              <label class="sn-f c-8">
+                <span>Elegir comprobante emitido</span>
+                <select data-sact-sel="pick-nc-ref">
+                  <option value="">— Selecciona una Factura o Boleta —</option>
+                  ${refs.map((c) => `<option value="${esc(c.id)}" ${F.ref_id === c.id ? 'selected' : ''}>${esc(c.doc_codigo)} · ${esc(c.cliente_nombre)} · ${c.moneda === 'PEN' ? 'S/' : 'US$'} ${fmt(c.total)}</option>`).join('')}
+                </select>
+              </label>
+              <label class="sn-f c-4">
+                <span>O escribir número</span>
+                <input type="text" data-nf="ref_doc" value="${esc(F.ref_doc)}" placeholder="F002-00000001">
+              </label>
+              <label class="sn-f c-4">
+                <span>RUC / DNI Cliente</span>
+                <input type="text" data-nf="cliente_doc" value="${esc(F.cliente_doc)}">
+              </label>
+              <label class="sn-f c-8">
+                <span>Cliente</span>
+                <input type="text" data-nf="cliente_nombre" value="${esc(F.cliente_nombre)}">
+              </label>
+            </div>
+          </section>
+
+          <section class="sn-box">
+            <div class="sn-box-h">
+              <h2>Detalle de ítems</h2>
+              <button type="button" class="btn sm" data-sact="add-nc-line">+ Agregar fila</button>
+            </div>
+            <div class="sn-tbl-wrap">
+              <table class="sn-tbl">
+                <thead><tr><th style="width:110px">Código</th><th>Descripción</th><th class="num" style="width:82px">Cant.</th><th class="num" style="width:115px">Valor (s/IGV)</th><th class="num" style="width:105px">Total</th><th style="width:36px"></th></tr></thead>
+                <tbody>
+                  ${F.items.map((it, idx) => {
+                    const ln = T.lines[idx] || { tot: 0 };
+                    return `<tr>
+                      <td><input type="text" data-ni="${idx}" data-k="codigo" value="${esc(it.codigo)}"></td>
+                      <td><input type="text" data-ni="${idx}" data-k="descripcion" value="${esc(it.descripcion)}"></td>
+                      <td><input type="number" step="any" data-ni="${idx}" data-k="cant" value="${esc(it.cant)}" style="text-align:right"></td>
+                      <td><input type="number" step="any" data-ni="${idx}" data-k="precio" value="${esc(it.precio)}" style="text-align:right"></td>
+                      <td class="num mono"><b>${sym} ${fmt(ln.tot)}</b></td>
+                      <td><button type="button" class="sn-rm" data-sact="del-nc-line" data-idx="${idx}" aria-label="Quitar">×</button></td>
+                    </tr>`;
+                  }).join('')}
+                </tbody>
+              </table>
+            </div>
+          </section>
         </div>
 
-        <div class="tbl-wrap" style="margin-bottom:12px">
-          <table class="lines">
-            <thead><tr><th style="width:120px">Código</th><th>Descripción</th><th class="num" style="width:90px">Cant.</th><th class="num" style="width:120px">V. Unit (s/IGV)</th><th class="num" style="width:115px">Total</th><th style="width:42px"></th></tr></thead>
-            <tbody>
-              ${F.items.map((it, idx) => {
-                const ln = T.lines[idx] || { tot: 0 };
-                return `<tr>
-                  <td><input type="text" data-ni="${idx}" data-k="codigo" value="${esc(it.codigo)}"></td>
-                  <td><input type="text" data-ni="${idx}" data-k="descripcion" value="${esc(it.descripcion)}"></td>
-                  <td><input type="number" step="any" data-ni="${idx}" data-k="cant" value="${esc(it.cant)}" style="text-align:right"></td>
-                  <td><input type="number" step="any" data-ni="${idx}" data-k="precio" value="${esc(it.precio)}" style="text-align:right"></td>
-                  <td class="num mono">${sym} ${fmt(ln.tot)}</td>
-                  <td><button type="button" class="btn sm danger" data-sact="del-nc-line" data-idx="${idx}">✕</button></td>
-                </tr>`;
-              }).join('')}
-            </tbody>
-          </table>
-        </div>
-
-        <div class="row" style="justify-content:space-between;align-items:center">
-          <button type="button" class="btn sm" data-sact="add-nc-line">+ Agregar línea</button>
-          <div class="row" style="align-items:center">
-            <span class="mono"><b>Total NC: ${sym} ${fmt(T.tot)}</b> (Sub ${sym} ${fmt(T.sub)} + IGV ${sym} ${fmt(T.igv)})</span>
-            <button type="button" class="btn primary" data-sact="submit-nc" ${ST.busy || !canWrite() || ST.schemaMissing ? 'disabled' : ''}>
+        <aside class="sn-col-side">
+          <div class="sn-side-box">
+            <h3>Nota de Crédito (07)</h3>
+            <div class="sn-g12">
+              <label class="sn-f c-6">
+                <span>Serie</span>
+                <select data-nf="serie">
+                  ${sers.map((s) => `<option value="${esc(s.serie)}" ${F.serie === s.serie ? 'selected' : ''}>${esc(s.serie)} · #${s.ultimo_numero + 1}</option>`).join('')}
+                </select>
+              </label>
+              <label class="sn-f c-6">
+                <span>Fecha</span>
+                <input type="date" data-nf="fecha_emision" value="${esc(F.fecha_emision)}">
+              </label>
+              <label class="sn-f c-12">
+                <span>Motivo SUNAT</span>
+                <select data-nf="motivo_nc">
+                  ${MOTIVOS_NC.map(([k, lbl]) => `<option value="${k}" ${F.motivo_nc === k ? 'selected' : ''}>${esc(lbl)}</option>`).join('')}
+                </select>
+              </label>
+              <label class="sn-f c-12">
+                <span>Moneda</span>
+                <select data-nf="moneda">
+                  <option value="USD" ${F.moneda === 'USD' ? 'selected' : ''}>Dólares (US$)</option>
+                  <option value="PEN" ${F.moneda === 'PEN' ? 'selected' : ''}>Soles (S/)</option>
+                </select>
+              </label>
+            </div>
+            <div class="sn-totbox">
+              <div class="sn-totrow"><span>Op. gravada</span><b>${sym} ${fmt(T.sub)}</b></div>
+              <div class="sn-totrow"><span>IGV (${ST.config.igv_pct || 18}%)</span><b>${sym} ${fmt(T.igv)}</b></div>
+              <div class="sn-totmain"><span>Total NC</span><b>${sym} ${fmt(T.tot)}</b></div>
+            </div>
+            <button type="button" class="btn primary sn-submit" data-sact="submit-nc" ${ST.busy || !canWrite() || ST.schemaMissing ? 'disabled' : ''}>
               ${ST.busy ? 'Emitiendo…' : 'Emitir Nota de Crédito'}
             </button>
           </div>
-        </div>
+        </aside>
       </div>`;
   }
 
@@ -791,107 +935,123 @@
 
     return `
       ${renderLastResult()}
-      <div class="card">
-        <h2>Emitir Guía de Remisión Electrónica Remitente (GRE · 09)</h2>
-        <p class="hint">Puedes precargar cliente e ítems desde una Factura ya emitida o llenarla manualmente.</p>
-        <div class="form-grid">
-          <label style="grid-column:span 2">Precargar desde Factura / Boleta (opcional)
-            <select data-sact-sel="pick-gre-ref">
-              <option value="">— Seleccionar comprobante —</option>
-              ${refs.map((c) => `<option value="${esc(c.id)}">${esc(c.doc_codigo)} · ${esc(c.cliente_nombre)} (${dmy(c.fecha_emision)})</option>`).join('')}
-            </select>
-          </label>
-          <label>Serie GRE
-            <select data-gf="serie">
-              ${sers.map((s) => `<option value="${esc(s.serie)}" ${F.serie === s.serie ? 'selected' : ''}>${esc(s.serie)} (próx. #${s.ultimo_numero + 1})</option>`).join('')}
-            </select>
-          </label>
-          <label>Fecha emisión
-            <input type="date" data-gf="fecha_emision" value="${esc(F.fecha_emision)}">
-          </label>
+      <div class="sn-work">
+        <div class="sn-col-main">
+          <section class="sn-box">
+            <div class="sn-box-h">
+              <h2>Destinatario y ruta</h2>
+              ${refs.length ? `<select data-sact-sel="pick-gre-ref" aria-label="Precargar desde factura" style="min-height:30px;padding:3px 9px;font-size:12.5px;max-width:290px">
+                <option value="">Precargar desde factura…</option>
+                ${refs.map((c) => `<option value="${esc(c.id)}">${esc(c.doc_codigo)} · ${esc(c.cliente_nombre)}</option>`).join('')}
+              </select>` : ''}
+            </div>
+            <div class="sn-g12">
+              <label class="sn-f c-4">
+                <span>RUC / DNI destinatario</span>
+                <input type="text" data-gf="cliente_doc" value="${esc(F.cliente_doc)}" placeholder="20123456789">
+              </label>
+              <label class="sn-f c-8">
+                <span>Razón social destinatario</span>
+                <input type="text" data-gf="cliente_nombre" value="${esc(F.cliente_nombre)}" placeholder="EMPRESA DESTINO S.A.C.">
+              </label>
+              <label class="sn-f c-3">
+                <span>Ubigeo partida</span>
+                <input type="text" maxlength="6" data-gd="partida_ubigeo" value="${esc(G.partida_ubigeo)}">
+              </label>
+              <label class="sn-f c-9">
+                <span>Dirección de partida</span>
+                <input type="text" data-gd="partida_direccion" value="${esc(G.partida_direccion)}" placeholder="Almacén PASEGA">
+              </label>
+              <label class="sn-f c-3">
+                <span>Ubigeo llegada</span>
+                <input type="text" maxlength="6" data-gd="llegada_ubigeo" value="${esc(G.llegada_ubigeo)}">
+              </label>
+              <label class="sn-f c-9">
+                <span>Dirección de llegada</span>
+                <input type="text" data-gd="llegada_direccion" value="${esc(G.llegada_direccion)}" placeholder="Dirección de entrega">
+              </label>
+            </div>
+          </section>
+
+          <section class="sn-box">
+            <div class="sn-box-h">
+              <h2>Bienes a trasladar</h2>
+              <button type="button" class="btn sm" data-sact="add-gre-line">+ Agregar bien</button>
+            </div>
+            <div class="sn-tbl-wrap">
+              <table class="sn-tbl">
+                <thead><tr><th style="width:115px">Código</th><th>Descripción</th><th style="width:82px">Unid.</th><th class="num" style="width:92px">Cantidad</th><th style="width:36px"></th></tr></thead>
+                <tbody>
+                  ${F.items.map((it, idx) => `<tr>
+                    <td><input type="text" data-gi="${idx}" data-k="codigo" value="${esc(it.codigo)}"></td>
+                    <td><input type="text" data-gi="${idx}" data-k="descripcion" value="${esc(it.descripcion)}"></td>
+                    <td><input type="text" data-gi="${idx}" data-k="unidad" value="${esc(it.unidad || 'UND')}"></td>
+                    <td><input type="number" step="any" data-gi="${idx}" data-k="cant" value="${esc(it.cant)}" style="text-align:right"></td>
+                    <td><button type="button" class="sn-rm" data-sact="del-gre-line" data-idx="${idx}" aria-label="Quitar">×</button></td>
+                  </tr>`).join('')}
+                </tbody>
+              </table>
+            </div>
+          </section>
         </div>
 
-        <h3 class="fh">1 · Destinatario y traslado</h3>
-        <div class="form-grid">
-          <label>RUC / DNI Destinatario
-            <input type="text" data-gf="cliente_doc" value="${esc(F.cliente_doc)}" placeholder="20123456789">
-          </label>
-          <label style="grid-column:span 2">Razón Social / Destinatario
-            <input type="text" data-gf="cliente_nombre" value="${esc(F.cliente_nombre)}">
-          </label>
-          <label>Motivo de traslado
-            <select data-gd="motivo">
-              ${MOTIVOS_GRE.map(([k, lbl]) => `<option value="${k}" ${G.motivo === k ? 'selected' : ''}>${esc(lbl)}</option>`).join('')}
-            </select>
-          </label>
-          <label>Fecha inicio traslado
-            <input type="date" data-gd="fecha_traslado" value="${esc(G.fecha_traslado)}">
-          </label>
-          <label>Peso bruto total (KG)
-            <input type="number" step="0.1" min="0.1" data-gd="peso_bruto" value="${esc(G.peso_bruto)}">
-          </label>
-          <label>Número de bultos
-            <input type="number" min="1" data-gd="bultos" value="${esc(G.bultos)}">
-          </label>
-          <label>Modalidad de transporte
-            <select data-gd="modalidad">
-              <option value="02" ${priv ? 'selected' : ''}>02 · Transporte Privado (vehículo propio)</option>
-              <option value="01" ${!priv ? 'selected' : ''}>01 · Transporte Público (agencia/courier)</option>
-            </select>
-          </label>
-        </div>
+        <aside class="sn-col-side">
+          <div class="sn-side-box">
+            <h3>Traslado y transporte</h3>
+            <div class="sn-g12">
+              <label class="sn-f c-6">
+                <span>Serie GRE</span>
+                <select data-gf="serie">
+                  ${sers.map((s) => `<option value="${esc(s.serie)}" ${F.serie === s.serie ? 'selected' : ''}>${esc(s.serie)} · #${s.ultimo_numero + 1}</option>`).join('')}
+                </select>
+              </label>
+              <label class="sn-f c-6">
+                <span>Inicio traslado</span>
+                <input type="date" data-gd="fecha_traslado" value="${esc(G.fecha_traslado)}">
+              </label>
+              <label class="sn-f c-12">
+                <span>Motivo de traslado</span>
+                <select data-gd="motivo">
+                  ${MOTIVOS_GRE.map(([k, lbl]) => `<option value="${k}" ${G.motivo === k ? 'selected' : ''}>${esc(lbl)}</option>`).join('')}
+                </select>
+              </label>
+              <label class="sn-f c-6">
+                <span>Peso bruto (KG)</span>
+                <input type="number" step="0.1" min="0.1" data-gd="peso_bruto" value="${esc(G.peso_bruto)}">
+              </label>
+              <label class="sn-f c-6">
+                <span>Bultos</span>
+                <input type="number" min="1" data-gd="bultos" value="${esc(G.bultos)}">
+              </label>
+            </div>
 
-        <div class="form-grid">
-          <label>Ubigeo Partida (6 dígitos)
-            <input type="text" maxlength="6" data-gd="partida_ubigeo" value="${esc(G.partida_ubigeo)}">
-          </label>
-          <label style="grid-column:span 2">Dirección de Partida
-            <input type="text" data-gd="partida_direccion" value="${esc(G.partida_direccion)}" placeholder="Almacén PASEGA…">
-          </label>
-          <label>Ubigeo Llegada (6 dígitos)
-            <input type="text" maxlength="6" data-gd="llegada_ubigeo" value="${esc(G.llegada_ubigeo)}">
-          </label>
-          <label style="grid-column:span 2">Dirección de Llegada
-            <input type="text" data-gd="llegada_direccion" value="${esc(G.llegada_direccion)}" placeholder="Dirección de entrega del cliente…">
-          </label>
-        </div>
+            <div class="sn-f">
+              <span>Modalidad</span>
+              <div class="sn-seg-full">
+                <button type="button" class="${priv ? 'on' : ''}" data-sact="gre-mod" data-val="02">Privado</button>
+                <button type="button" class="${!priv ? 'on' : ''}" data-sact="gre-mod" data-val="01">Público</button>
+              </div>
+            </div>
 
-        <h3 class="fh">2 · Datos del transporte (${priv ? 'Privado' : 'Público'})</h3>
-        <div class="form-grid">
-          ${priv ? `
-            <label>Placa del vehículo<input type="text" data-gd="placa" value="${esc(G.placa)}" placeholder="ABC123"></label>
-            <label>DNI Conductor<input type="text" data-gd="conductor_dni" value="${esc(G.conductor_dni)}" placeholder="12345678"></label>
-            <label>Nombres Conductor<input type="text" data-gd="conductor_nombre" value="${esc(G.conductor_nombre)}"></label>
-            <label>Apellidos Conductor<input type="text" data-gd="conductor_apellidos" value="${esc(G.conductor_apellidos)}"></label>
-            <label>N° Licencia (Brevete)<input type="text" data-gd="conductor_licencia" value="${esc(G.conductor_licencia)}" placeholder="Q12345678"></label>
-          ` : `
-            <label>RUC Empresa Transportista<input type="text" data-gd="transportista_ruc" value="${esc(G.transportista_ruc)}" placeholder="20..."></label>
-            <label style="grid-column:span 2">Razón Social Transportista<input type="text" data-gd="transportista_nombre" value="${esc(G.transportista_nombre)}"></label>
-            <label>Placa (opcional)<input type="text" data-gd="placa" value="${esc(G.placa)}"></label>
-          `}
-        </div>
+            <div class="sn-g12">
+              ${priv ? `
+                <label class="sn-f c-6"><span>Placa</span><input type="text" data-gd="placa" value="${esc(G.placa)}" placeholder="ABC123"></label>
+                <label class="sn-f c-6"><span>DNI conductor</span><input type="text" data-gd="conductor_dni" value="${esc(G.conductor_dni)}"></label>
+                <label class="sn-f c-6"><span>Nombres</span><input type="text" data-gd="conductor_nombre" value="${esc(G.conductor_nombre)}"></label>
+                <label class="sn-f c-6"><span>Apellidos</span><input type="text" data-gd="conductor_apellidos" value="${esc(G.conductor_apellidos)}"></label>
+                <label class="sn-f c-12"><span>Licencia (brevete)</span><input type="text" data-gd="conductor_licencia" value="${esc(G.conductor_licencia)}" placeholder="Q12345678"></label>
+              ` : `
+                <label class="sn-f c-12"><span>RUC transportista</span><input type="text" data-gd="transportista_ruc" value="${esc(G.transportista_ruc)}" placeholder="20..."></label>
+                <label class="sn-f c-12"><span>Razón social transportista</span><input type="text" data-gd="transportista_nombre" value="${esc(G.transportista_nombre)}"></label>
+                <label class="sn-f c-12"><span>Placa (opcional)</span><input type="text" data-gd="placa" value="${esc(G.placa)}"></label>
+              `}
+            </div>
 
-        <h3 class="fh">3 · Bienes a trasladar</h3>
-        <div class="tbl-wrap" style="margin-bottom:12px">
-          <table class="lines">
-            <thead><tr><th style="width:120px">Código</th><th>Descripción</th><th style="width:85px">Unid.</th><th class="num" style="width:95px">Cantidad</th><th style="width:42px"></th></tr></thead>
-            <tbody>
-              ${F.items.map((it, idx) => `<tr>
-                <td><input type="text" data-gi="${idx}" data-k="codigo" value="${esc(it.codigo)}"></td>
-                <td><input type="text" data-gi="${idx}" data-k="descripcion" value="${esc(it.descripcion)}"></td>
-                <td><input type="text" data-gi="${idx}" data-k="unidad" value="${esc(it.unidad || 'UND')}"></td>
-                <td><input type="number" step="any" data-gi="${idx}" data-k="cant" value="${esc(it.cant)}" style="text-align:right"></td>
-                <td><button type="button" class="btn sm danger" data-sact="del-gre-line" data-idx="${idx}">✕</button></td>
-              </tr>`).join('')}
-            </tbody>
-          </table>
-        </div>
-        <div class="row" style="justify-content:space-between">
-          <button type="button" class="btn sm" data-sact="add-gre-line">+ Agregar bien</button>
-          <button type="button" class="btn primary" data-sact="submit-gre" ${ST.busy || !canWrite() || ST.schemaMissing ? 'disabled' : ''}>
-            ${ST.busy ? 'Emitiendo…' : 'Emitir Guía de Remisión (GRE)'}
-          </button>
-        </div>
+            <button type="button" class="btn primary sn-submit" data-sact="submit-gre" ${ST.busy || !canWrite() || ST.schemaMissing ? 'disabled' : ''}>
+              ${ST.busy ? 'Emitiendo…' : 'Emitir Guía de Remisión'}
+            </button>
+          </div>
+        </aside>
       </div>`;
   }
 
@@ -903,18 +1063,33 @@
       return true;
     });
 
+    const activos = ST.comprobantes.filter((c) => c.estado !== 'anulado');
+    const nFact = activos.filter((c) => c.tipo === '01' || c.tipo === '03').length;
+    const nCred = activos.filter((c) => (c.tipo === '01' || c.tipo === '03') && c.forma_pago === 'CREDITO').length;
+    const nGre = activos.filter((c) => c.tipo === '09').length;
+
     const estBadge = (c) => {
-      if (c.estado === 'aceptado') return '<span class="badge good">✓ Aceptado SUNAT</span>';
-      if (c.estado === 'demo') return '<span class="badge warn">DEMO</span>';
+      if (c.estado === 'aceptado') return '<span class="badge good">✓ SUNAT</span>';
+      if (c.estado === 'demo') return '<span class="badge warn">Demo</span>';
       if (c.estado === 'anulado') return '<span class="badge bad">Anulado</span>';
       if (c.estado === 'rechazado') return '<span class="badge bad">Rechazado</span>';
       return `<span class="badge neutral">${esc(c.estado)}</span>`;
     };
 
     return `
-      <div class="card">
-        <div class="sec-title"><h2>Comprobantes emitidos desde PASEGA</h2><span class="muted small">${list.length} registro(s)</span></div>
-        <div class="filters">
+      <div class="sn-kpis">
+        <div class="kpi"><div class="l">Comprobantes emitidos</div><div class="v">${ST.comprobantes.length}</div><div class="s">Desde este módulo</div></div>
+        <div class="kpi"><div class="l">Facturas y boletas</div><div class="v">${nFact}</div><div class="s">Activos</div></div>
+        <div class="kpi"><div class="l">Ventas al crédito</div><div class="v">${nCred}</div><div class="s">Enviadas a Cobranzas</div></div>
+        <div class="kpi"><div class="l">Guías de remisión</div><div class="v">${nGre}</div><div class="s">GRE remitente</div></div>
+      </div>
+
+      <section class="sn-box">
+        <div class="sn-box-h">
+          <h2>Historial de emisión</h2>
+          <button type="button" class="btn sm" data-sact="refresh">Actualizar</button>
+        </div>
+        <div class="filters" style="margin-bottom:12px">
           <label>Tipo
             <select data-hf="tipo">
               <option value="">Todos</option>
@@ -924,14 +1099,12 @@
               <option value="09" ${ST.histFilter.tipo === '09' ? 'selected' : ''}>Guías de Remisión (09)</option>
             </select>
           </label>
-          <label>Buscar
-            <input type="search" data-hf="q" value="${esc(ST.histFilter.q)}" placeholder="Número, cliente, RUC…">
+          <label style="flex:1;min-width:200px">Buscar
+            <input type="search" data-hf="q" value="${esc(ST.histFilter.q)}" placeholder="Número, cliente, RUC o vendedor…">
           </label>
-          <div class="spacer"></div>
-          <button type="button" class="btn sm" data-sact="refresh">Actualizar</button>
         </div>
 
-        ${list.length ? `<div class="tbl-wrap"><table>
+        ${list.length ? `<div class="sn-tbl-wrap"><table class="sn-tbl">
           <thead><tr><th>Comprobante</th><th>Fecha</th><th>Cliente</th><th>Pago</th><th class="num">Total</th><th>Estado</th><th>Acciones</th></tr></thead>
           <tbody>
             ${list.map((c) => {
@@ -948,61 +1121,63 @@
                   ${c.xml_url ? `<a class="btn sm" href="${esc(c.xml_url)}" target="_blank" rel="noopener">XML</a>` : ''}
                   <a class="btn sm cb-wa" href="${esc(waComprobanteUrl(c))}" target="_blank" rel="noopener">WA</a>
                   ${(c.tipo === '01' || c.tipo === '03') && c.estado !== 'anulado' ? `
-                    <button type="button" class="btn sm" data-sact="to-nc" data-id="${esc(c.id)}" title="Emitir Nota de Crédito">NC</button>
-                    <button type="button" class="btn sm" data-sact="to-gre" data-id="${esc(c.id)}" title="Emitir Guía de Remisión">GRE</button>
+                    <button type="button" class="btn sm" data-sact="to-nc" data-id="${esc(c.id)}">NC</button>
+                    <button type="button" class="btn sm" data-sact="to-gre" data-id="${esc(c.id)}">GRE</button>
                   ` : ''}
                   ${c.estado !== 'anulado' && canWrite() ? `<button type="button" class="btn sm danger" data-sact="anular" data-id="${esc(c.id)}">Anular</button>` : ''}
                 </td>
               </tr>`;
             }).join('')}
           </tbody>
-        </table></div>` : `<div class="empty"><div class="big">Aún no has emitido comprobantes desde aquí</div><div>Ve a la pestaña <b>Emitir (Factura / Boleta)</b> para crear tu primer comprobante en Modo Demo.</div></div>`}
-      </div>`;
+        </table></div>` : `<div class="empty"><div class="big">Aún no hay comprobantes emitidos</div><div>Usa la pestaña <b>Emitir</b> para probar tu primera Factura o Boleta en Modo Demo.</div></div>`}
+      </section>`;
   }
 
   function renderConfig() {
     const C = ST.config;
     return `
       <div class="grid2">
-        <div class="card">
-          <h2>Datos fiscales de PASEGA</h2>
-          <p class="hint">Se muestran en tus comprobantes PDF y se usan como punto de partida por defecto en Guías de Remisión.</p>
-          <div class="form-grid">
-            <label>RUC de PASEGA<input type="text" maxlength="11" data-cf="ruc" value="${esc(C.ruc)}" placeholder="20..."></label>
-            <label>IGV (%)<input type="number" step="0.5" data-cf="igv_pct" value="${esc(C.igv_pct)}"></label>
-            <label style="grid-column:span 2">Razón Social<input type="text" data-cf="razon_social" value="${esc(C.razon_social)}"></label>
-            <label style="grid-column:span 2">Dirección fiscal (Almacén / Oficina)<input type="text" data-cf="direccion" value="${esc(C.direccion)}" placeholder="Av. ... Lima"></label>
-            <label>Ubigeo (6 dígitos)<input type="text" maxlength="6" data-cf="ubigeo" value="${esc(C.ubigeo)}"></label>
-            <label>Modo de operación
+        <section class="sn-box">
+          <div class="sn-box-h">
+            <h2>Datos fiscales de PASEGA</h2>
+            <span class="sn-sub">Aparecen en tus PDFs y Guías</span>
+          </div>
+          <div class="sn-g12">
+            <label class="sn-f c-6"><span>RUC</span><input type="text" maxlength="11" data-cf="ruc" value="${esc(C.ruc)}" placeholder="20..."></label>
+            <label class="sn-f c-3"><span>Ubigeo</span><input type="text" maxlength="6" data-cf="ubigeo" value="${esc(C.ubigeo)}"></label>
+            <label class="sn-f c-3"><span>IGV (%)</span><input type="number" step="0.5" data-cf="igv_pct" value="${esc(C.igv_pct)}"></label>
+            <label class="sn-f c-12"><span>Razón social</span><input type="text" data-cf="razon_social" value="${esc(C.razon_social)}"></label>
+            <label class="sn-f c-12"><span>Dirección fiscal</span><input type="text" data-cf="direccion" value="${esc(C.direccion)}" placeholder="Av. ... Lima"></label>
+            <label class="sn-f c-12"><span>Modo de emisión</span>
               <select data-cf="modo">
-                <option value="demo" ${C.modo !== 'produccion' ? 'selected' : ''}>Modo Demo (pruebas locales)</option>
-                <option value="produccion" ${C.modo === 'produccion' ? 'selected' : ''} ${ST.status.nubefactConfigured ? '' : 'disabled'}>Producción SUNAT (Nubefact)${ST.status.nubefactConfigured ? '' : ' · requiere configurar Vercel'}</option>
+                <option value="demo" ${C.modo !== 'produccion' ? 'selected' : ''}>Modo Demo (pruebas sin enviar a SUNAT)</option>
+                <option value="produccion" ${C.modo === 'produccion' ? 'selected' : ''} ${ST.status.nubefactConfigured ? '' : 'disabled'}>Producción SUNAT (Nubefact)${ST.status.nubefactConfigured ? '' : ' · falta configurar Vercel'}</option>
               </select>
             </label>
           </div>
-          <div class="row" style="justify-content:flex-end">
-            <button type="button" class="btn primary" data-sact="save-config" ${!canWrite() || ST.schemaMissing ? 'disabled' : ''}>Guardar configuración</button>
+          <div class="row" style="justify-content:flex-end;margin-top:14px">
+            <button type="button" class="btn primary" data-sact="save-config" ${!canWrite() || ST.schemaMissing ? 'disabled' : ''}>Guardar cambios</button>
           </div>
-        </div>
+        </section>
 
-        <div class="card">
-          <h2>Estado de conexión Nubefact & RUC</h2>
-          <p class="hint">Las llaves de Nubefact viven de forma segura en las variables de entorno de Vercel (nunca en el navegador).</p>
-          <div style="display:grid;gap:10px;margin-bottom:14px">
-            <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:var(--surface-2);border-radius:8px">
+        <section class="sn-box">
+          <div class="sn-box-h">
+            <h2>Conexión Nubefact y Series</h2>
+            <span class="sn-sub">Credenciales guardadas en Vercel</span>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px">
+            <div class="sn-status-row">
               <span>Nubefact API (<code>NUBEFACT_URL</code> + <code>NUBEFACT_TOKEN</code>)</span>
-              <span class="badge ${ST.status.nubefactConfigured ? 'good' : 'warn'}">${ST.status.nubefactConfigured ? '✓ Configurado' : 'Pendiente (Modo Demo)'}</span>
+              <span class="badge ${ST.status.nubefactConfigured ? 'good' : 'warn'}">${ST.status.nubefactConfigured ? '✓ Conectado' : 'Modo Demo'}</span>
             </div>
-            <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:var(--surface-2);border-radius:8px">
+            <div class="sn-status-row">
               <span>Consulta RUC/DNI dedicada (<code>RUC_API_TOKEN</code>)</span>
-              <span class="badge ${ST.status.rucApiConfigured ? 'good' : 'neutral'}">${ST.status.rucApiConfigured ? '✓ Configurado' : 'Opcional (usa respaldo gratis)'}</span>
+              <span class="badge ${ST.status.rucApiConfigured ? 'good' : 'neutral'}">${ST.status.rucApiConfigured ? '✓ Activa' : 'Respaldo gratis'}</span>
             </div>
           </div>
 
-          <h2 style="margin-top:16px">Series y correlativos</h2>
-          <p class="hint">Por defecto usamos series nuevas (<code>F002</code>, <code>B002</code>, <code>T002</code>) para no chocar con comprobantes de tu sistema anterior.</p>
-          <div class="tbl-wrap">
-            <table class="lines">
+          <div class="sn-tbl-wrap">
+            <table class="sn-tbl">
               <thead><tr><th>Tipo</th><th>Serie</th><th class="num">Último N°</th></tr></thead>
               <tbody>
                 ${ST.series.map((s) => `<tr>
@@ -1013,42 +1188,61 @@
               </tbody>
             </table>
           </div>
-        </div>
+        </section>
       </div>`;
   }
 
+  function updateEmitTotalsInPlace() {
+    if (!ST.form) return;
+    const T = calcTotals(ST.form.items, ST.form.precio_incluye_igv);
+    const sym = ST.form.moneda === 'PEN' ? 'S/' : 'US$';
+    const sub = document.getElementById('sn-tot-sub');
+    const igv = document.getElementById('sn-tot-igv');
+    const all = document.getElementById('sn-tot-all');
+    if (sub) sub.textContent = `${sym} ${fmt(T.sub)}`;
+    if (igv) igv.textContent = `${sym} ${fmt(T.igv)}`;
+    if (all) all.textContent = `${sym} ${fmt(T.tot)}`;
+    T.lines.forEach((ln, idx) => {
+      const cell = document.querySelector(`#sunat-host [data-line-tot="${idx}"]`);
+      if (cell) cell.innerHTML = `<b>${sym} ${fmt(ln.tot)}</b>`;
+    });
+  }
+
   function render() {
+    injectStyles();
     const host = document.getElementById('sunat-host');
     if (!host) return;
     host.hidden = !ST.visible;
     if (!ST.visible) return;
 
     const tabs = [
-      ['emitir', 'Emitir (Factura / Boleta)'],
-      ['nc', 'Notas de Crédito (07)'],
-      ['gre', 'Guías de Remisión (GRE)'],
+      ['emitir', 'Emitir'],
+      ['nc', 'Notas de Crédito'],
+      ['gre', 'Guías (GRE)'],
       ['historial', `Historial (${ST.comprobantes.length})`],
-      ['config', 'Configuración y Series']
+      ['config', 'Configuración']
     ];
 
     const body = !ST.loaded
-      ? '<div class="card empty"><div class="big">Cargando módulo SUNAT…</div></div>'
+      ? '<div class="sn-box empty"><div class="big">Cargando módulo de facturación…</div></div>'
       : ST.tab === 'nc' ? renderNc()
       : ST.tab === 'gre' ? renderGre()
       : ST.tab === 'historial' ? renderHistorial()
       : ST.tab === 'config' ? renderConfig()
       : renderEmitir();
 
+    const isProd = ST.config.modo === 'produccion' && ST.status.nubefactConfigured;
+
     host.innerHTML = `
       <header class="top">
         <div class="brand">
           <div>
             <h1>Facturación Electrónica · SUNAT</h1>
-            <div class="sub">Emite Facturas, Boletas, Notas de Crédito y Guías (GRE) sincronizadas con Finanzas y Cobranzas</div>
+            <div class="sub">Facturas, Boletas, Notas de Crédito y Guías integradas con Finanzas y Cobranzas</div>
           </div>
           <div class="status">
-            <span class="dot ${ST.config.modo === 'produccion' && ST.status.nubefactConfigured ? '' : 'off'}"></span>
-            ${ST.config.modo === 'produccion' && ST.status.nubefactConfigured ? 'Nubefact · Producción SUNAT' : 'Modo Demo (Pruebas)'}
+            <span class="dot ${isProd ? '' : 'off'}"></span>
+            ${isProd ? 'Producción SUNAT' : 'Modo Demo'}
           </div>
         </div>
         <nav class="tabs">
@@ -1056,7 +1250,7 @@
         </nav>
       </header>
       <main>
-        ${renderBanner()}
+        ${renderModeBar()}
         ${ST.msg}
         ${body}
       </main>`;
@@ -1072,6 +1266,30 @@
     }
     if (act === 'refresh') {
       await refreshComprobantes();
+      return;
+    }
+    if (act === 'set-tipo') {
+      const v = el.dataset.val === '03' ? '03' : '01';
+      ST.form.tipo = v;
+      const sers = seriesByTipo(v);
+      ST.form.serie = (sers[0] && sers[0].serie) || (v === '03' ? 'B002' : 'F002');
+      ST.form.cliente_tipo_doc = v === '01' ? '6' : '1';
+      render();
+      return;
+    }
+    if (act === 'set-moneda') {
+      ST.form.moneda = el.dataset.val === 'PEN' ? 'PEN' : 'USD';
+      render();
+      return;
+    }
+    if (act === 'set-pago') {
+      ST.form.forma_pago = el.dataset.val === 'CREDITO' ? 'CREDITO' : 'CONTADO';
+      render();
+      return;
+    }
+    if (act === 'gre-mod') {
+      ST.greForm.gre_datos.modalidad = el.dataset.val === '01' ? '01' : '02';
+      render();
       return;
     }
     if (act === 'igv-mode') {
@@ -1128,9 +1346,11 @@
           if (res.cliente.telefono) F.cliente_telefono = res.cliente.telefono;
           if (res.cliente.email) F.cliente_email = res.cliente.email;
           const stParts = [res.cliente.estado_sunat, res.cliente.condicion_sunat].filter(Boolean).join(' · ');
-          F.cliente_sunat_info = `✓ Encontrado (${res.source === 'cache' ? 'clientes guardados' : 'padrón SUNAT/RENIEC'})${stParts ? ' · ' + stParts : ''}`;
+          F.cliente_sunat_ok = true;
+          F.cliente_sunat_info = `✓ ${res.source === 'cache' ? 'Cliente guardado' : 'Padrón SUNAT/RENIEC'}${stParts ? ' · ' + stParts : ''}`;
         } else {
-          F.cliente_sunat_info = res.message || 'No encontrado. Puedes ingresar los datos manualmente.';
+          F.cliente_sunat_ok = false;
+          F.cliente_sunat_info = res.message || 'No encontrado. Ingresa los datos manualmente.';
         }
       } catch (e) {
         ST.msg = `<div class="callout warn"><div>${esc(e.message || e)}</div></div>`;
@@ -1278,7 +1498,7 @@
           updated_at: new Date().toISOString()
         });
         if (error) throw error;
-        ST.msg = '<div class="callout good"><div>Configuración fiscal guardada correctamente.</div></div>';
+        ST.msg = '<div class="callout good"><div>Configuración guardada.</div></div>';
       } catch (e) {
         ST.msg = `<div class="callout bad"><div>${esc(e.message || e)}</div></div>`;
       } finally {
@@ -1313,12 +1533,7 @@
       const d = t.dataset;
       if (d.ef) {
         ST.form[d.ef] = t.value;
-        if (d.ef === 'tipo') {
-          const sers = seriesByTipo(t.value);
-          ST.form.serie = (sers[0] && sers[0].serie) || (t.value === '03' ? 'B002' : 'F002');
-          ST.form.cliente_tipo_doc = t.value === '01' ? '6' : '1';
-        }
-        render();
+        if (d.ef === 'cliente_tipo_doc' || d.ef === 'serie' || d.ef === 'fecha_emision') render();
         return;
       }
       if (d.efChk) {
@@ -1327,7 +1542,7 @@
       }
       if (d.ei !== undefined) {
         ST.form.items[Number(d.ei)][d.k] = t.value;
-        render();
+        updateEmitTotalsInPlace();
         return;
       }
       if (d.nf) {
@@ -1347,7 +1562,6 @@
       }
       if (d.gd) {
         ST.greForm.gre_datos[d.gd] = t.value;
-        render();
         return;
       }
       if (d.gi !== undefined) {
@@ -1373,6 +1587,8 @@
           ST.form.cliente_direccion = cli.direccion || '';
           ST.form.cliente_telefono = cli.telefono || '';
           ST.form.cliente_email = cli.email || '';
+          ST.form.cliente_sunat_ok = true;
+          ST.form.cliente_sunat_info = '✓ Cliente cargado';
           render();
         }
       }
@@ -1406,8 +1622,10 @@
       }
       const d = t.dataset;
       if (d.ef) ST.form[d.ef] = t.value;
-      else if (d.ei !== undefined) ST.form.items[Number(d.ei)][d.k] = t.value;
-      else if (d.nf) ST.ncForm[d.nf] = t.value;
+      else if (d.ei !== undefined) {
+        ST.form.items[Number(d.ei)][d.k] = t.value;
+        if (d.k === 'cant' || d.k === 'precio') updateEmitTotalsInPlace();
+      } else if (d.nf) ST.ncForm[d.nf] = t.value;
       else if (d.ni !== undefined) ST.ncForm.items[Number(d.ni)][d.k] = t.value;
       else if (d.gf) ST.greForm[d.gf] = t.value;
       else if (d.gd) ST.greForm.gre_datos[d.gd] = t.value;

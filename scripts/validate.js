@@ -33,7 +33,14 @@ for (const rel of ['vercel.json', 'package.json']) {
 // 2. Validar sintaxis de archivos JS
 for (const rel of [
   'api/config.js',
+  'api/sunat/_auth.js',
+  'api/sunat/_providers/nubefact.js',
+  'api/sunat/status.js',
+  'api/sunat/consulta.js',
+  'api/sunat/emitir.js',
+  'api/sunat/anular.js',
   'public/supabase-bridge.js',
+  'public/sunat-module.js',
   'scripts/backup-local.js',
   'scripts/enviar-cambio.js',
   'scripts/validate.js'
@@ -54,6 +61,11 @@ try {
     fail('public/index.html no carga /supabase-bridge.js');
   } else {
     ok('public/index.html incluye /supabase-bridge.js');
+  }
+  if (!html.includes('/sunat-module.js')) {
+    fail('public/index.html no carga /sunat-module.js');
+  } else {
+    ok('public/index.html incluye /sunat-module.js');
   }
   if (!html.includes('@supabase/supabase-js')) {
     fail('public/index.html no incluye @supabase/supabase-js');
@@ -136,7 +148,7 @@ try {
   fail(`Error probando api/config.js: ${e.message}`);
 }
 
-// 5. Validar que supabase/schema.sql mantenga RLS habilitado
+// 5. Validar que supabase/schema.sql y supabase/sunat_schema.sql mantengan RLS habilitado
 try {
   const sql = read('supabase/schema.sql');
   if (!/alter\s+table\s+public\.pasega_docs\s+enable\s+row\s+level\s+security/i.test(sql)) {
@@ -144,8 +156,18 @@ try {
   } else {
     ok('supabase/schema.sql mantiene RLS habilitado');
   }
+  const sunatSql = read('supabase/sunat_schema.sql');
+  const sunatTables = ['sunat_config', 'sunat_series', 'sunat_clientes', 'sunat_comprobantes'];
+  const missingRls = sunatTables.filter(
+    (t) => !new RegExp(`alter\\s+table\\s+public\\.${t}\\s+enable\\s+row\\s+level\\s+security`, 'i').test(sunatSql)
+  );
+  if (missingRls.length) {
+    fail(`supabase/sunat_schema.sql falta RLS en: ${missingRls.join(', ')}`);
+  } else {
+    ok('supabase/sunat_schema.sql mantiene RLS en las 4 tablas SUNAT');
+  }
 } catch (e) {
-  fail(`No se pudo leer supabase/schema.sql: ${e.message}`);
+  fail(`No se pudo leer esquema SQL: ${e.message}`);
 }
 
 // 6. Escáner básico de secretos accidentales en archivos del repositorio

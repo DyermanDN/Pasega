@@ -113,7 +113,33 @@ async function fetchFromSupabase(cfg) {
     if (batch.length < pageSize) break;
     from += pageSize;
   }
-  return rows;
+
+  // 3. Descargar tablas SUNAT si existen en Supabase (opcional, no falla si aún no se activó SUNAT)
+  const sunat = {};
+  for (const tbl of ['sunat_config', 'sunat_series', 'sunat_clientes', 'sunat_comprobantes']) {
+    try {
+      const list = [];
+      let sFrom = 0;
+      while (true) {
+        const res = await fetch(`${baseUrl}/rest/v1/${tbl}?select=*`, {
+          headers: {
+            apikey: anonKey,
+            Authorization: `Bearer ${jwt}`,
+            Range: `${sFrom}-${sFrom + pageSize - 1}`
+          }
+        });
+        if (!res.ok) break;
+        const batch = await res.json();
+        if (!Array.isArray(batch)) break;
+        for (const item of batch) list.push(item);
+        if (batch.length < pageSize) break;
+        sFrom += pageSize;
+      }
+      sunat[tbl] = list;
+    } catch {}
+  }
+
+  return { rows, sunat };
 }
 
 function pruneOldBackups(dir, keepCount) {
@@ -130,7 +156,7 @@ function pruneOldBackups(dir, keepCount) {
   }
 }
 
-async function syncToLocalPostgres(cfg, rows) {
+async function syncToLocalPostgres(cfg, rows, sunat) {
   let pg;
   try {
     pg = require('pg');
@@ -218,8 +244,31 @@ async function syncToLocalPostgres(cfg, rows) {
       WHERE collection = 'ventas';
     `);
 
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS public.pasega_sunat_backup (
+        table_name text PRIMARY KEY,
+        row_count integer NOT NULL DEFAULT 0,
+        rows jsonb NOT NULL DEFAULT '[]'::jsonb,
+        synced_at timestamptz NOT NULL DEFAULT now()
+      );
+    `);
+    if (sunat && typeof sunat === 'object') {
+      for (const [tbl, list] of Object.entries(sunat)) {
+        if (!Array.isArray(list)) continue;
+        await client.query(
+          `INSERT INTO public.pasega_sunat_backup (table_name, row_count, rows, synced_at)
+           VALUES ($1, $2, $3::jsonb, now())
+           ON CONFLICT (table_name) DO UPDATE SET row_count = EXCLUDED.row_count, rows = EXCLUDED.rows, synced_at = now()`,
+          [tbl, list.length, JSON.stringify(list)]
+        );
+      }
+    }
+
     const summary = {};
     for (const r of rows) summary[r.collection] = (summary[r.collection] || 0) + 1;
+    if (sunat && Array.isArray(sunat.sunat_comprobantes)) {
+      summary.sunat_comprobantes = sunat.sunat_comprobantes.length;
+    }
     await client.query(
       'INSERT INTO public.pasega_backup_log (total_rows, summary) VALUES ($1, $2::jsonb)',
       [rows.length, JSON.stringify(summary)]
@@ -238,7 +287,7 @@ async function syncToLocalPostgres(cfg, rows) {
 async function main() {
   const cfg = loadEnvFile(ENV_FILE);
   console.log('Conectando a Supabase...');
-  const rows = await fetchFromSupabase(cfg);
+  const { rows, sunat } = await fetchFromSupabase(cfg);
   const exportedAt = new Date().toISOString();
   const stamp = stampFile();
 
@@ -252,7 +301,7 @@ async function main() {
   fs.writeFileSync(sqlFile, buildSqlDump(rows, exportedAt), 'utf8');
   fs.writeFileSync(
     jsonFile,
-    JSON.stringify({ format: 'pasega-backup-v1', exportedAt, totalRows: rows.length, collections, rows }, null, 2),
+    JSON.stringify({ format: 'pasega-backup-v1', exportedAt, totalRows: rows.length, collections, rows, sunat }, null, 2),
     'utf8'
   );
   pruneOldBackups(BACKUP_DIR, Number(cfg.BACKUP_KEEP_FILES || 30));
@@ -263,7 +312,7 @@ async function main() {
 
   const pgEnabled = String(cfg.LOCAL_PG_ENABLED || 'true').toLowerCase() !== 'false';
   if (pgEnabled && cfg.LOCAL_PG_PASSWORD && cfg.LOCAL_PG_PASSWORD !== 'TU_CONTRASEÑA_DE_PGADMIN') {
-    await syncToLocalPostgres(cfg, rows);
+    await syncToLocalPostgres(cfg, rows, sunat);
   } else if (pgEnabled) {
     console.log('Aviso: Completa LOCAL_PG_PASSWORD en .env.backup para sincronizar automáticamente con pgAdmin 4.');
   }
